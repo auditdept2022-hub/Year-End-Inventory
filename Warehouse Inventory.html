@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#285db8">
+  <title>Motorlandia Inventory Control (v43)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+    :root{font-family:'DM Sans',Arial,sans-serif;color:#1c2940;background:#dde6f1;font-synthesis:none;text-rendering:optimizeLegibility;--blue:#285db8;--muted:#8995a8;--border:#e6ebf2}
+    *{box-sizing:border-box}body{margin:0;min-width:320px;background:#dde6f1}button,input,select,textarea{font:inherit}button{cursor:pointer}
+    .hidden{display:none!important}.login-shell{min-height:100vh;background:radial-gradient(circle at 50% 0%,#e7efff 0,transparent 45%),#dde6f1;display:flex;flex-direction:column}.login-top{height:82px;padding:0 7vw;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e4eaf3;background:#eef3fa d0}.brand-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:#2459b5;color:#fff;font-size:23px}.brand-name{font:800 17px Manrope,Arial,sans-serif;letter-spacing:.4px}.brand-sub{font-size:13px;color:#8490a4;letter-spacing:1.1px;margin-top:3px}.demo-tag{margin-left:auto;border:1px solid #d7e2f3;color:#61718c;border-radius:20px;padding:7px 11px;font-size:13px;font-weight:700;letter-spacing:.8px}.login-content{width:min(760px,92vw);margin:70px auto 50px}.eyebrow{color:#4774c4;font-size:13px;font-weight:700;letter-spacing:1.5px}.login-content h1{font:800 clamp(29px,4vw,39px) Manrope,Arial,sans-serif;margin:12px 0 10px;letter-spacing:-1.4px}.login-intro{color:#78869b;line-height:1.7;font-size:16px;max-width:580px;margin:0 0 30px}.checker-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.checker-card{border:1px solid #e2e8f1;border-radius:16px;background:#f7f9fc;padding:20px;display:flex;align-items:center;text-align:left;gap:14px;box-shadow:0 5px 18px #233b6508;transition:.18s;width:100%}.checker-card:hover{border-color:#9db7e8;transform:translateY(-2px);box-shadow:0 10px 25px #233b6510}.checker-avatar{width:53px;height:53px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;color:#fff;font:800 18px Manrope,Arial,sans-serif;border:3px solid #fff;box-shadow:0 0 0 2px #e8edf5}.checker-avatar.small{width:40px;height:40px;font-size:14px}.checker-info{display:flex;flex-direction:column;gap:4px;min-width:0}.checker-info b{font:800 17px Manrope,Arial,sans-serif;letter-spacing:.2px}.checker-info small{font-size:14px;color:#8a96a8}.checker-info em{font-size:14px;font-style:normal;font-weight:700;margin-top:5px}.checker-number{margin-left:auto;width:36px;height:36px;border-radius:50%;border:1.5px solid;display:grid;place-items:center;font:800 14px Manrope,Arial,sans-serif}.login-note{display:flex;gap:9px;align-items:center;margin-top:23px;color:#8b7890;font-size:14px;background:#fff8eb;border:1px solid #f2e3c7;border-radius:10px;padding:12px 14px;line-height:1.5}.login-footer{text-align:center;color:#a1acbc;font-size:14px;padding:24px;border-top:1px solid #e6ebf3;margin-top:auto}
+    .app-shell{min-height:100vh;display:flex;background:#f5f7fb}.sidebar{width:235px;background:#e9eff7;border-right:1px solid #e6ebf2;display:flex;flex-direction:column;padding:24px 14px 16px;flex-shrink:0}.side-brand{display:flex;align-items:center;gap:10px;padding:0 8px 35px}.side-brand .brand-mark{width:38px;height:38px;border-radius:11px}.side-brand b{font:800 15px Manrope,Arial,sans-serif;letter-spacing:.4px}.side-brand small{display:block;font-size:10px;color:#8490a4;letter-spacing:.8px;margin-top:3px}.side-label{font-size:11px;font-weight:700;color:#a0aabc;letter-spacing:1.4px;padding:0 12px 11px}.nav-item{display:flex;align-items:center;gap:12px;border:0;background:transparent;color:#77849a;padding:12px;border-radius:9px;text-align:left;font-size:14px;font-weight:600;margin-bottom:4px;width:100%}.nav-item.active{background:#eaf1ff;color:#2d5fb5}.nav-icon{width:19px;text-align:center;font-size:18px}.nav-count{margin-left:auto;background:#d7e5ff;color:#2d5fb5;border-radius:12px;padding:2px 7px;font-size:13px}.side-label-lower{margin-top:28px}.sidebar-bottom{margin-top:auto}.connection-state{display:flex;align-items:center;gap:8px;color:#8995a8;font-size:13px;padding:13px 10px;border-top:1px solid #edf0f5}.state-dot,.demo-dot{width:7px;height:7px;border-radius:50%;background:#e5a33b;display:inline-block;flex-shrink:0}.state-dot.online{background:#35a66c}.side-user{display:flex;align-items:center;gap:9px;padding:14px 6px 0;border-top:1px solid #edf0f5}.mini-avatar{width:31px;height:31px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:13px;font-weight:800;flex-shrink:0}.side-user>span:nth-child(2){display:flex;flex-direction:column;gap:3px;min-width:0}.side-user b{font-size:14px}.side-user small{font-size:13px;color:#96a0b0}.icon-button{border:0;background:transparent;color:#8793a6;display:grid;place-items:center;padding:7px;border-radius:8px;margin-left:auto}.icon-button:hover{background:#f1f4f9}
+    .main-panel{flex:1;min-width:0;padding:0 32px;display:flex;flex-direction:column}.topbar{display:flex;align-items:center;justify-content:space-between;padding:25px 0 22px;border-bottom:1px solid #e5eaf2;gap:12px}.crumb{font-size:13px;color:#8d99ab;margin-bottom:7px}.crumb span{padding:0 7px;color:#c0c8d4}.topbar h2{font:800 22px Manrope,Arial,sans-serif;letter-spacing:-.6px;margin:0}.top-actions{display:flex;align-items:center;gap:15px}.profile-pill{display:flex;align-items:center;gap:8px;border:1px solid #e4e9f1;background:#f7f9fc;border-radius:30px;padding:5px 10px 5px 5px;font-size:14px;font-weight:700}.profile-pill .mini-avatar{width:27px;height:27px}.welcome-row{display:flex;justify-content:space-between;align-items:center;padding:27px 0 21px;gap:14px}.welcome-row h3{font:800 22px Manrope,Arial,sans-serif;margin:0 0 5px}.welcome-row p,.panel-heading p{margin:0;color:#8995a8;font-size:14px;line-height:1.5}.primary-button,.outline-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:8px;padding:11px 15px;font-size:14px;font-weight:700;white-space:nowrap}.primary-button{background:#285db8;color:#fff;box-shadow:0 4px 9px #285db81a}.primary-button:hover{background:#204f9e}.outline-button{background:#f7f9fc;border:1px solid #dfe6f0;color:#68778d}.metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}.metric-card,.panel{background:#f7f9fc;border:1px solid #e8edf4;border-radius:13px;box-shadow:0 3px 10px #263e6505}.metric-card{padding:17px 17px 15px;min-width:0}.metric-top{display:flex;align-items:center;justify-content:space-between;color:#7d8a9e;font-size:14px;font-weight:600;gap:7px}.metric-icon{width:35px;height:35px;border-radius:10px;display:grid;place-items:center;font-size:20px;flex-shrink:0}.metric-icon.navy{background:#e9eef8;color:#355b9e}.metric-icon.blue{background:#e9f1ff;color:#2d6ac8}.metric-icon.amber{background:#fff4dd;color:#c28a16}.metric-icon.green{background:#e4f7ed;color:#24965b}.metric-card>strong{display:block;font:800 28px Manrope,Arial,sans-serif;margin:13px 0 5px;letter-spacing:-1px}.of-total{font-size:17px;color:#9ca7b7;font-weight:600}.metric-card>small{font-size:13px;color:#9aa5b5}.progress-track{height:4px;background:#edf1f7;border-radius:6px;overflow:hidden;margin:9px 0 7px}.progress-track span{display:block;height:100%;background:#32a66b;border-radius:6px}.content-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(265px,1fr);gap:16px;margin-top:20px}.panel{padding:20px;min-width:0}.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.panel-heading h3{font:800 16px Manrope,Arial,sans-serif;margin:0 0 5px}.text-button{border:0;background:transparent;color:#2c63bd;font-size:14px;font-weight:700}.toolbar{display:flex;gap:9px;margin-bottom:15px}.search-box{display:flex;align-items:center;gap:8px;border:1px solid #e2e8f1;border-radius:8px;padding:0 10px;flex:1;min-width:100px;color:#9aa5b5;background:#f7f9fc}.search-box input{border:0;outline:0;width:100%;min-width:0;padding:10px 0;font-size:13px;color:#344258;background:transparent}.toolbar select{border:1px solid #e2e8f1;border-radius:8px;background:#f7f9fc;padding:0 9px;color:#65738a;font-size:13px;max-width:150px}.table-wrap{overflow:auto;width:100%}table{border-collapse:collapse;width:100%;font-size:13px;text-align:left;white-space:nowrap}thead th{color:#9aa5b5;font-size:11px;font-weight:600;border-bottom:1px solid #edf0f5;padding:11px 9px}tbody td{padding:12px 9px;border-bottom:1px solid #f0f3f7;color:#68768b}tbody tr:last-child td{border-bottom:0}.click-row{cursor:pointer}.click-row:hover{background:#f8faff}.bike-cell{display:flex;align-items:center;gap:9px}.bike-icon{width:31px;height:31px;border-radius:8px;display:grid;place-items:center;background:#f0f4fa;color:#617da9;font-size:18px}.bike-cell b{display:block;color:#354258;font-size:13px}.bike-cell small,.sub-cell{display:block;color:#9aa5b5;font-size:11px;margin-top:4px}.engine-text{font-size:13px;color:#53627a}.type-tag,.inspection-tag{display:inline-flex;align-items:center;gap:5px;border-radius:5px;padding:5px 7px;font-size:11px;font-weight:700}.new-tag{background:#edf4ff;color:#396dc1}.repo-tag{background:#fff4e3;color:#b78020}.inspection-tag span{width:5px;height:5px;border-radius:50%;background:currentColor}.done-tag{background:#eaf8f0;color:#27945b}.pending-tag{background:#f1f3f7;color:#8994a6}.issue-tag{background:#fff0ef;color:#cf4c48}.checker-name{font-size:11px;color:#65738a;font-weight:700}.unassigned{color:#adb5c1;font-size:11px;font-style:italic}.activity-panel{padding:20px}.muted-icon{color:#97a3b4}.status-line{display:flex;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #eff2f6}.status-icon{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;flex-shrink:0}.green-bg{background:#e7f7ee;color:#2a9c61}.orange-bg{background:#fff4e1;color:#c28c26}.red-bg{background:#fff0ee;color:#d2524d}.status-line>div{display:flex;flex-direction:column;gap:4px;flex:1}.status-line b{font-size:13px;color:#435168}.status-line small{font-size:11px;color:#9ba6b5}.status-line strong{font:800 20px Manrope,Arial,sans-serif}.checker-active{background:#f7f9fd;border:1px solid #edf1f7;border-radius:10px;margin-top:17px;padding:14px}.active-title{font-size:11px;letter-spacing:1px;color:#97a3b4;font-weight:800;margin-bottom:13px}.active-profile{display:flex;align-items:center;gap:10px}.active-profile>div{display:flex;flex-direction:column;gap:4px;flex:1}.active-profile b{font-size:14px}.active-profile small{font-size:11px;color:#9aa5b5}.live-dot{width:7px;height:7px;border-radius:50%;background:#2aa365;box-shadow:0 0 0 4px #e1f5e9}.checker-active p{font-size:13px;line-height:1.6;color:#8a96a7;margin:13px 0 0}.checker-active p b{color:#5e6b7f}.main-footer{display:flex;justify-content:space-between;gap:10px;color:#a0aabb;font-size:11px;padding:23px 0;margin-top:auto}.demo-dot{background:#e5a33b;margin-right:6px}.full-table{margin-top:24px}.record-count{font-size:13px;color:#7e8ba0;background:#f2f5fa;padding:7px 9px;border-radius:6px}.empty-state{text-align:center;padding:30px;color:#99a4b4}.remark-cell{max-width:230px;overflow:hidden;text-overflow:ellipsis}
+    .modal-backdrop{position:fixed;inset:0;background:#14243c66;display:grid;place-items:center;padding:20px;z-index:10}.modal{width:min(520px,100%);max-height:90vh;overflow:auto;background:#f7f9fc;border-radius:16px;padding:25px;box-shadow:0 20px 70px #12213c30}.modal-heading{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}.modal-heading h3{font:800 20px Manrope,Arial,sans-serif;margin:7px 0 5px}.modal-heading p{font-size:14px;color:#8995a8;margin:0}.unit-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}.unit-detail-grid>div{background:#f6f8fc;border-radius:8px;padding:11px;min-width:0}.unit-detail-grid small,.unit-detail-grid b{display:block;overflow-wrap:anywhere}.unit-detail-grid small{color:#909bad;font-size:11px;margin-bottom:7px}.unit-detail-grid b{font-size:14px;color:#354258}.form-label{display:block;font-size:14px;font-weight:700;color:#526078;margin:16px 0 9px}.form-label span{color:#d14b48}.result-options{display:flex;gap:10px}.result-options button{display:flex;align-items:center;gap:8px;border:1px solid #dfe6f0;border-radius:8px;background:#f7f9fc;color:#7b899e;padding:11px 13px;font-size:14px;flex:1;justify-content:center}.result-options button.chosen{border-color:#3ba36e;background:#effaf4;color:#258d57}.result-options button.chosen.issue{border-color:#d95b56;background:#fff3f2;color:#c44742}.modal textarea,.settings-input{width:100%;border:1px solid #dfe6f0;border-radius:8px;padding:12px;font-size:14px;outline:0;resize:vertical;min-height:85px;color:#354258}.modal textarea:focus,.settings-input:focus{border-color:#7da2e4}.attribution{display:flex;align-items:center;gap:10px;background:#f7f9fc;padding:12px;border-radius:9px;margin-top:18px}.attribution>span:last-child{font-size:13px;color:#76849a;display:flex;flex-direction:column;gap:4px}.attribution b{color:#36455b}.attribution small{color:#9aa5b5}.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}.connection-warning{display:flex;gap:12px;background:#fff8e9;border:1px solid #f1e4c7;color:#ad7c22;padding:14px;border-radius:10px;margin-bottom:20px}.connection-warning>div b{font-size:14px}.connection-warning p{font-size:13px;line-height:1.6;margin:5px 0 0;color:#8c7b5c}.settings-input{min-height:0;padding:12px}.helper-text{font-size:13px;color:#929eae;line-height:1.6;margin-top:9px}.toast{position:fixed;bottom:22px;right:22px;z-index:20;max-width:min(450px,calc(100vw - 30px));background:#20324c;color:#fff;box-shadow:0 10px 30px #16284430;border-radius:10px;padding:13px 15px;display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.45}.toast-icon{color:#7de0a9;flex-shrink:0}.toast button{border:0;background:transparent;color:#b9c4d5;display:grid;place-items:center;margin-left:5px}.settings-input{width:100%;border:1px solid #dfe6f0;border-radius:8px}
+    @media(max-width:1100px){.main-panel{padding:0 22px}.sidebar{width:205px}.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.content-grid{grid-template-columns:1fr}.activity-panel{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}.activity-panel .panel-heading,.activity-panel .checker-active{grid-column:1/-1}.status-line:nth-of-type(3){border-bottom:0}}
+    @media(max-width:720px){.sidebar{width:62px;padding:18px 8px}.side-brand{padding:0 4px 28px}.side-brand>div:nth-child(2),.side-label{display:none}.side-brand .brand-mark{width:40px}.nav-item{justify-content:center;padding:12px 0;gap:0;font-size:0}.nav-count{display:none}.sidebar-bottom .side-user{justify-content:center;padding:12px 0 0;flex-wrap:wrap}.side-user>span:nth-child(2),.side-user .icon-button,.connection-state{display:none}.main-panel{padding:0 14px}.topbar{align-items:flex-start;gap:12px}.topbar h2{font-size:21px}.top-actions{gap:7px;flex-direction:column;align-items:flex-end}.profile-pill{font-size:0}.profile-pill .mini-avatar{width:27px}.profile-pill .chevron{display:none}.welcome-row{align-items:flex-start;gap:10px}.welcome-row h3{font-size:18px}.welcome-row .primary-button{font-size:0;padding:11px}.metric-grid{gap:9px}.metric-card{padding:13px}.metric-card>strong{font-size:24px}.metric-top{font-size:13px}.metric-icon{width:30px;height:30px}.panel{padding:14px}.panel-heading h3{font-size:15px}.activity-panel{display:block}.status-line:nth-of-type(3){border-bottom:1px solid #eff2f6}.main-footer{flex-direction:column}.login-top{padding:0 5vw}.login-content{margin:45px auto}.checker-grid{grid-template-columns:1fr}.checker-card{padding:15px}.checker-avatar{width:47px;height:47px}.checker-number{width:32px;height:32px}.toolbar{flex-wrap:wrap}.search-box{flex-basis:100%;height:38px}.toolbar select{height:36px;flex:1;max-width:none}.toolbar .outline-button{height:36px}.full-table{padding:13px}.modal{padding:20px}.result-options{flex-direction:column}}
+                                .content-grid{grid-template-columns:1fr!important}
+                                                                  
+    .year-pill{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 6px 0 14px;background:#eaf0fb;color:#3f5a8a;border:1px solid #c7d6ef;border-radius:10px;font:800 12px Manrope,Arial,sans-serif;letter-spacing:.9px;white-space:nowrap}
+    .year-pill select{height:28px;border:0;background:transparent;font:800 14px Manrope,Arial,sans-serif;color:#21509f;cursor:pointer;padding:0 4px;max-width:none}
+    .scope-bar{margin:0 0 22px;background:#f7f9fc;border:1px solid #d3dce9;border-radius:16px;box-shadow:0 6px 18px #1d3a6a0f;overflow:hidden}
+    .scope-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;padding:16px 20px 14px}
+    .scope-heading{display:flex;flex-direction:column;gap:4px;min-width:0}
+    .scope-title{font:800 12px Manrope,Arial,sans-serif;letter-spacing:1.4px;color:#5d6d88;text-transform:uppercase}
+    .scope-note{font:500 14px DM Sans,Arial,sans-serif;color:#6f7d95}
+    .scope-controls{display:flex;gap:14px;flex-wrap:wrap}
+    .scope-field{display:flex;flex-direction:column;gap:6px}
+    .scope-field span{font:800 11px Manrope,Arial,sans-serif;letter-spacing:1.1px;color:#5d6d88;text-transform:uppercase}
+    .scope-field select{height:40px;min-width:180px;max-width:none;padding:0 12px;font:700 14px DM Sans,Arial,sans-serif;color:#1c2940;border:1px solid #b9c8de;border-radius:10px;background:#eef3fa;cursor:pointer}
+    .scope-tabs{display:flex;gap:4px;padding:0 12px;background:#eef3fa;border-top:1px solid #dfe6f0;overflow-x:auto;scrollbar-width:thin}
+    .sheet-chip{position:relative;display:inline-flex;align-items:center;gap:9px;padding:14px 14px 13px;border:0;background:transparent;color:#5d6d88;font:700 14px DM Sans,Arial,sans-serif;white-space:nowrap;cursor:pointer;transition:color .15s,background .15s}
+    .sheet-chip:hover{color:#21509f;background:#e2eaf6}
+    .sheet-chip::after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:transparent}
+    .sheet-chip.active{color:#21509f}
+    .sheet-chip.active::after{background:#2f6fd0}
+    .chip-ic{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:#d5e1f4;color:#285db8;font-size:12px;flex-shrink:0}
+    .sheet-chip.active .chip-ic{background:#2f6fd0;color:#fff}
+    .chip-cnt{min-width:26px;padding:2px 8px;border-radius:999px;background:#d5e1f4;color:#2f4266;font:800 12px Manrope,Arial,sans-serif;text-align:center}
+    .sheet-chip.active .chip-cnt{background:#2f6fd0;color:#fff}
+
+    @media(max-width:720px){
+      .app-shell{flex-direction:column;min-height:100vh}
+      .sidebar{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:auto;z-index:30;flex-direction:row;flex-wrap:wrap;padding:0 6px calc(6px + env(safe-area-inset-bottom,0px));border-right:0;border-top:1px solid #d5dee9;background:#f4f7fb;box-shadow:0 -4px 16px #1c294014}
+      .side-brand,.side-label,.side-label-lower,#settingsNav{display:none!important}
+      .sidebar-bottom{order:-1;width:100%;display:flex!important;align-items:center;justify-content:space-between;padding:6px 6px 2px;margin:0}
+      .connection-state{display:flex!important;font-size:12px;padding:0}
+      .side-user{display:flex!important;align-items:center;gap:6px;padding:0}
+      .side-user .icon-button{display:inline-flex!important}
+      .nav-item{flex:1;flex-direction:column;justify-content:center;gap:2px;padding:7px 2px;margin:0;font-size:11px;font-weight:600;text-align:center;border-radius:10px}
+      .nav-icon{font-size:17px}
+      .nav-count{display:inline-block!important;margin-left:2px}
+      .main-panel{padding:0 12px 104px}
+      table thead{display:none}
+      table,tbody,tr,td{display:block;width:100%}
+      tr{background:#fff;border:1px solid #e6ebf2;border-radius:12px;padding:9px 12px;margin:0 0 8px}
+      td{border:0;padding:3px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:right;min-width:0}
+      td::before{content:attr(data-label);font-size:11px;color:#8995a8;text-align:left;flex-shrink:0}
+      td:first-child{display:block;text-align:left;padding-bottom:6px}
+      td:first-child::before{content:none}
+      .remark-cell{white-space:normal}
+      .toolbar{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+      .toolbar .search-box{grid-column:1/-1}
+      .toolbar select{width:100%}
+    }
+  
+    .app-shell{display:block;min-height:100vh}
+    .main-panel{width:100%;padding-bottom:28px}
+    .tabbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:14px 0 4px;padding-bottom:12px;border-bottom:1px solid #e6ebf2}
+    .tabbar .nav-item{display:inline-flex;flex-direction:row;align-items:center;gap:8px;width:auto;margin:0;padding:9px 14px;border-radius:10px;font-size:14px;font-weight:600;justify-content:flex-start}
+    .tabbar .nav-item.active{background:#e3ebf7;color:#285db8}
+    .tabbar .nav-count{display:inline-block!important;margin-left:4px}
+    .tabbar .hidden{display:none!important}
+    .tabbar-status{margin-left:auto;display:flex;align-items:center}
+    .tabbar .sidebar-bottom{order:0;width:auto;display:flex!important;align-items:center;gap:10px;padding:0;margin:0}
+    .tabbar .connection-state{display:flex!important;font-size:13px;padding:0}
+    .tabbar .side-user{display:flex!important;align-items:center;gap:8px;padding:0}
+    .tabbar .side-user>span:nth-child(2){display:inline!important}
+    .tabbar .side-user .icon-button{display:inline-flex!important}
+    @media(max-width:720px){
+      .tabbar{margin:10px 0 2px;padding-bottom:8px;overflow-x:auto;flex-wrap:nowrap}
+      .tabbar .nav-item{font-size:13px;padding:8px 11px;white-space:nowrap;flex-shrink:0}
+      .tabbar-status{margin-left:0;width:100%;justify-content:space-between}
+      .tabbar .side-user>span:nth-child(2){display:none!important}
+      .main-panel{padding-bottom:24px}
+    }
+  
+    body{background:#f4f6fb}
+    .panel{border-radius:14px;box-shadow:0 1px 2px #1c294008;border-color:#e3e9f2}
+    .primary-button{border-radius:12px;box-shadow:0 4px 12px #285db833}
+    .mobile-nav{display:none}
+    @media(max-width:720px){
+      .mobile-nav{display:none!important;width:100%;margin:0 0 10px;padding:12px 14px;font-size:16px;font-weight:600;color:#1c2940;background:#fff;border:1px solid #d5dee9;border-radius:12px}
+      .tabbar{flex-wrap:wrap;overflow:visible;margin:10px 0 4px;padding-bottom:10px}
+      .tabbar .nav-item{display:none!important}
+      .tabbar-status{margin-left:0;width:100%;justify-content:space-between}
+      .topbar h2{font-size:20px}
+      .panel{padding:12px}
+      .scope-bar{padding:10px}
+      .scope-controls{width:100%;flex-wrap:wrap}
+      .scope-field{flex:1 1 140px}
+      .scope-field select{width:100%}
+      .toolbar{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+      .toolbar .search-box{grid-column:1/-1}
+      .toolbar select{width:100%}
+      tr{padding:9px 12px}
+      td::before{font-weight:600}
+    }
+  
+    .burger-row{display:none}
+    @media(max-width:720px){
+      .burger-row{display:flex!important;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;width:100%}
+      .burger{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid #d5dee9;background:#fff;border-radius:12px;font-size:20px;color:#1c2940;padding:0;cursor:pointer}
+      #menuLabel{font-weight:700;font-size:16px}
+      .menu-panel{flex-basis:100%;display:flex;flex-direction:column;gap:4px;background:#fff;border:1px solid #d5dee9;border-radius:12px;padding:6px}
+      .menu-panel.hidden{display:none!important}
+      .menu-item{text-align:left;border:0;background:transparent;padding:11px 12px;border-radius:9px;font:inherit;font-size:15px;color:#1c2940;cursor:pointer}
+      .menu-item:hover,.menu-item:focus{background:#e3ebf7;outline:none}
+      .tabbar{margin:6px 0 4px;padding-bottom:0;border-bottom:0}
+      .crumb,#yearSubtitle{display:none!important}
+      .topbar{margin-bottom:6px;padding-bottom:6px}
+      .main-panel{padding:0 12px 24px}
+      .welcome-row{flex-direction:column;align-items:stretch;gap:10px;margin:4px 0 12px}
+      .welcome-row h3{font-size:18px;margin:0}
+      .welcome-row>div:last-child{display:flex!important;gap:8px;width:100%}
+      .welcome-row .primary-button{font-size:14px;flex:1;padding:12px;justify-content:center}
+      .welcome-row .outline-button{font-size:14px;padding:12px}
+      .metric-grid{gap:8px}
+      .metric-card{padding:12px}
+      .metric-card small{display:none}
+      .metric-card>strong{font-size:22px}
+    }
+  
+    .burger{display:none}
+    .menu-panel{display:none}
+    @media(max-width:720px){
+      .topbar{display:flex!important;flex-direction:row!important;align-items:center;gap:10px;position:relative}
+      .topbar>div:first-of-type{flex:1;min-width:0}
+      .burger{display:inline-flex;flex-shrink:0;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid #d5dee9;background:#fff;border-radius:11px;font-size:19px;color:#1c2940;padding:0;cursor:pointer}
+      .menu-panel{position:absolute;top:calc(100% + 6px);left:12px;min-width:230px;display:flex;flex-direction:column;gap:2px;background:#fff;border:1px solid #d5dee9;border-radius:12px;padding:6px;box-shadow:0 8px 24px #1c294026;z-index:40}
+      .menu-panel.hidden{display:none!important}
+      .menu-item{text-align:left;border:0;background:transparent;padding:11px 12px;border-radius:9px;font:inherit;font-size:15px;color:#1c2940;cursor:pointer}
+      .menu-item:hover,.menu-item:focus{background:#e3ebf7;outline:none}
+      .burger-row{display:none!important}
+    }
+  
+    @media(max-width:720px){
+      .topbar{background:#4169E1;border-bottom:0;margin:0 0 10px;padding:14px 14px 16px;border-radius:0}
+      .topbar h2,.topbar .crumb{color:#fff}
+      .topbar .crumb span,.topbar .crumb{color:#dbe5ff}
+      .burger{background:transparent;border-color:#ffffff80;color:#fff}
+      .year-pill{background:#ffffff26;border-color:#ffffff66;color:#fff}
+      .year-pill select{background:transparent;color:#fff;border:0}
+      .year-pill select option{color:#1c2940}
+      .profile-pill{background:#fff}
+      .main-panel{padding:0!important}
+      .welcome-row,.metric-grid,.scope-bar,.panel{margin-left:8px!important;margin-right:8px!important}
+    }
+  
+    .sheet-select{display:none}
+    @media(max-width:720px){
+      .scope-heading,.inventory-panel>.panel-heading,#sheetChips{display:none!important}
+      .sheet-select{display:block;width:100%;margin:0 0 8px;padding:12px 14px;font-size:16px;font-weight:700;color:#1c2940;background:#fff;border:1px solid #d5dee9;border-radius:12px}
+      body{font-weight:500}
+      h2,h3,strong,b,.metric-card>strong,.welcome-row h3,.topbar h2{font-weight:800!important}
+      td,th,label,.metric-top,.metric-card span,.chip-cnt,.menu-item,.toolbar select,.search-box input{font-weight:700}
+      .sub-cell,.mono,.engine-text{font-weight:700}
+    }
+  .offline-banner{position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff4e5;color:#8a4b00;border-bottom:1px solid #f0c98a;padding:10px 14px;font-size:14px;font-weight:700}
+    .offline-banner button{font:inherit;font-weight:700;background:#8a4b00;color:#fff;border:0;border-radius:8px;padding:7px 12px;cursor:pointer}
+  .conn-btn{flex-shrink:0;width:40px;height:40px;border:1px solid #d5dee9;background:#fff;border-radius:11px;font-size:18px;color:#1c2940;padding:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+    @media(max-width:720px){.topbar .conn-btn{background:transparent;border-color:#ffffff80;color:#fff}}
+  
+    .tabbar{display:none!important}
+    .scope-heading,.inventory-panel>.panel-heading,#sheetChips{display:none!important}
+    .sheet-select{display:block!important;width:100%;max-width:420px;margin:0 0 12px;padding:12px 14px;font-size:16px;font-weight:700;color:#0f1a2e;background:#fff;border:1px solid #c5d0df;border-radius:12px}
+    body{font-size:16px;color:#0f1a2e;font-weight:500}
+    h1,h2,h3,strong,b{color:#0f1a2e;font-weight:800}
+    th{color:#3c4a60;font-weight:700;font-size:14px}
+    td{font-size:15px;color:#0f1a2e}
+    small,.sub,.sub-cell,.metric-top span,.metric-card small,.scope-field label,label{color:#3c4a60;font-weight:600;font-size:14px}
+    .topbar{background:#4169E1;color:#fff;border-radius:14px;margin:12px 0 14px;padding:14px 18px;position:relative;display:flex;align-items:center;gap:12px;border-bottom:0}
+    .topbar h2{color:#fff;font-weight:800}
+    .topbar .crumb,.topbar .crumb span{color:#e3ebff;font-weight:600}
+    .topbar .year-pill{background:#ffffff26;border-color:#ffffff66;color:#fff}
+    .topbar .year-pill select{background:transparent;color:#fff;border:0;font-weight:800}
+    .topbar .year-pill select option{color:#0f1a2e}
+    .topbar .profile-pill{background:#fff;color:#0f1a2e}
+    .burger{display:inline-flex;flex-shrink:0;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid #ffffff80;background:#ffffff1f;border-radius:12px;font-size:20px;color:#fff;padding:0;cursor:pointer}
+    .menu-panel{position:absolute;top:calc(100% + 8px);left:14px;min-width:260px;display:flex;flex-direction:column;gap:2px;background:#fff;border:1px solid #c5d0df;border-radius:12px;padding:6px;box-shadow:0 10px 28px #0f1a2e33;z-index:40}
+    .menu-panel.hidden{display:none!important}
+    .menu-item{text-align:left;border:0;background:transparent;padding:12px 14px;border-radius:9px;font:inherit;font-size:16px;font-weight:700;color:#0f1a2e;cursor:pointer}
+    .menu-item:hover,.menu-item:focus{background:#e3ebff;outline:none}
+    .menu-item[data-conn]{border-top:1px solid #e3e9f2;margin-top:4px;border-radius:0 0 9px 9px}
+    @media(max-width:720px){
+      .topbar{margin:0 0 10px;border-radius:0;padding:14px}
+      .burger-row{display:none!important}
+    }
+  .topbar-title{flex:1;min-width:0;text-align:left}
+    .topbar-title h2{text-align:left;margin:0}
+    .crumb{display:none!important}
+  .loc-select{width:100%;margin-top:4px;font:inherit;font-size:15px;font-weight:700;padding:8px 10px;border:1px solid #c5d0df;border-radius:10px;background:#fff;color:#0f1a2e}
+  
+    #sheetChips,#sheetSelect,.scope-heading{display:none!important}
+    label:has(#repoYear){display:none!important}
+  .tab-strip{display:flex;gap:6px;overflow-x:auto;padding:12px 0 0;border-bottom:1px solid #d3dcea;scrollbar-width:thin}.tab-strip .sheet-chip{position:relative;flex:0 0 auto;display:flex;align-items:center;gap:8px;border:1px solid #d3dcea;border-bottom:0;background:#e9eff7;color:#5d6c85;border-radius:10px 10px 0 0;padding:9px 14px 11px;font-size:13px;font-weight:700;overflow:hidden}.tab-strip .sheet-chip.active{background:#fff;color:#285db8;box-shadow:0 -2px 0 #285db8 inset}.tab-strip .sheet-chip.dim{opacity:.55}.tab-strip .chip-cnt{background:#d7e5ff;color:#2d5fb5;border-radius:10px;padding:1px 7px;font-size:12px}.tab-strip .sheet-chip i{position:absolute;left:0;bottom:0;height:3px;background:#35a66c}
+.live-badge{display:flex;align-items:center;gap:7px;border:1px solid #cfe9db;background:#effaf3;color:#23804f;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;white-space:nowrap}.live-badge i{width:8px;height:8px;border-radius:50%;background:#35a66c;animation:pulse 1.6s infinite}.live-badge.off{background:#fff8eb;border-color:#f2e3c7;color:#a7741a}.live-badge.off i{background:#e5a33b;animation:none}@keyframes pulse{0%{box-shadow:0 0 0 0 #35a66c80}100%{box-shadow:0 0 0 8px #35a66c00}}
+tr.flash td{animation:flash 3.5s ease-out}@keyframes flash{0%{background:#fff3b8}100%{background:transparent}}
+.live-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:0 0 18px}.live-card{background:#fff;border:1px solid #e6ebf2;border-radius:14px;padding:18px}.live-card h3{margin:0 0 14px;font:800 15px Manrope,Arial,sans-serif}.cbar{margin-bottom:13px;font-size:13px}.cbar div{display:flex;justify-content:space-between;margin-bottom:5px;font-weight:700}.cbar span{display:block;height:7px;border-radius:5px;background:#e8edf5;overflow:hidden}.cbar em{display:block;height:100%}.feed-item{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #eef1f6;font-size:13px}.feed-item:first-of-type{border-top:0}.feed-item small{color:#8995a8;margin-left:auto}.scope-tabs,.sheet-select,.scope-field:has(#repoYear){display:none!important}@media(max-width:800px){.live-grid{grid-template-columns:1fr}}
+tr.row-ok td{background:#eefaf3}tr.row-bad td{background:#fff0ef}
+.menu-panel{position:fixed!important;left:0;top:0;bottom:0;width:300px;max-width:86vw;z-index:60;border-radius:0 18px 18px 0!important;padding:0!important;gap:0!important;overflow-y:auto;box-shadow:12px 0 40px #1c294033;flex-basis:auto!important}
+#menuScrim{position:fixed;inset:0;background:#1c294055;z-index:55}
+.dr-head{display:flex;align-items:center;gap:10px;padding:18px 16px;background:#e9eff7;border-bottom:1px solid #d5dee9}.dr-head b{display:block;font-size:14px}.dr-head small{color:#6d7b92}.dr-x{margin-left:auto;border:0;background:#fff;border-radius:9px;width:32px;height:32px;cursor:pointer}
+.dr-sec{padding:12px 10px 4px;font-size:11px;font-weight:800;letter-spacing:.08em;color:#8995a8}.dr-it{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;border-radius:10px;font:inherit;font-size:14px;color:#1c2940;cursor:pointer}.dr-it:hover{background:#e3ebf7}.dr-it.on{background:#d7e5ff;color:#285db8;font-weight:700}.dr-it em{margin-left:auto;font-style:normal;font-size:12px;background:#eef2f8;border-radius:10px;padding:1px 8px}.dr-it.soon em{background:#fff3d6;color:#a7741a}
+.rep-modal{max-width:880px;width:94vw;max-height:90vh;overflow:auto}.rep-modal table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0 18px}.rep-modal th,.rep-modal td{padding:7px 9px;border-bottom:1px solid #e6ebf2;text-align:left}.rep-modal th{background:#f1f5fa}.rep-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0 18px}.rep-kpi div{background:#f5f7fb;border-radius:12px;padding:12px}.rep-kpi b{display:block;font-size:22px}.rep-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.up-drop{border:2px dashed #b9c8df;border-radius:14px;padding:26px;text-align:center;background:#f8fafd;cursor:pointer}
+@media print{body *{visibility:hidden}#reportModal,#reportModal *{visibility:visible}#reportModal{position:absolute;left:0;top:0;width:100%;background:#fff}.rep-modal{max-height:none;overflow:visible;box-shadow:none}.no-print{display:none!important}}
+.ic{stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;flex:none}.dr-ic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:none}.dr-it{gap:12px!important}.tag .ic,.type-tag .ic{width:14px;height:14px}.result-options button .ic{width:19px;height:19px}.result-options button#discrepancyOption.chosen .ic{color:#d2473f}.sheet-chip .chip-ic .ic{width:15px;height:15px}.sub-strip{display:flex;gap:8px;flex-wrap:wrap;padding:12px 0 2px}.sub-strip:empty{display:none}.sub-pill{display:flex;align-items:center;gap:8px;border:1px solid #cfd9e8;background:#fff;color:#4a5a75;border-radius:20px;padding:7px 14px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}.sub-pill.active{background:#285db8;border-color:#285db8;color:#fff}.sub-pill.dim{opacity:.55}.sub-pill b{font-size:11px;background:#e7eefc;color:#285db8;border-radius:10px;padding:1px 7px}.sub-pill.active b{background:#ffffff33;color:#fff}.up-row{display:grid;grid-template-columns:1fr 2fr;gap:12px;margin:14px 0}.up-row label{font-size:12px;font-weight:700;color:#5d6c85;display:block}.up-row .settings-input{width:100%;margin-top:5px}.sub-pill.add{border-style:dashed;color:#285db8;padding:7px 12px}.sub-pill.add:hover{background:#e7eefc}.sub-pill .ic{width:15px;height:15px}@media(max-width:600px){.up-row{grid-template-columns:1fr}}
+/* v29 compact layout */
+.top-search{position:sticky;top:0;z-index:25;display:flex;align-items:center;gap:8px;padding:8px 0;background:#ffffffee;backdrop-filter:blur(6px);border-bottom:1px solid #e5eaf2}.top-search-box{flex:1;min-width:0;display:flex;align-items:center;gap:8px;border:1px solid #cfd9e8;border-radius:10px;background:#f7f9fc;padding:0 10px;color:#7d8aa0}.top-search-box:focus-within{border-color:#285db8;background:#fff}.top-search-box input{flex:1;min-width:0;border:0;outline:0;background:transparent;padding:10px 0;font:inherit;font-size:14px;color:#1c2940}.top-search-box button{border:0;background:#e3e9f3;border-radius:50%;width:22px;height:22px;display:grid;place-items:center;color:#5d6c85;cursor:pointer;padding:0}.top-search-box button .ic{width:13px;height:13px}.top-search select{border:1px solid #cfd9e8;border-radius:10px;background:#f7f9fc;padding:9px 6px;font-size:12px;color:#4a5a75;max-width:112px}.seg{display:flex;border:1px solid #cfd9e8;border-radius:10px;overflow:hidden;flex:none}.seg button{display:flex;align-items:center;gap:5px;border:0;background:#f7f9fc;color:#5d6c85;padding:9px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.seg button.on{background:#285db8;color:#fff}.seg .ic{width:15px;height:15px}
+#inventoryPanel .toolbar,#inventoryPanel .panel-heading,#tablePage .search-box,#tablePage #filterTable{display:none!important}
+.tab-strip{padding-top:6px;gap:4px;flex-wrap:nowrap;scrollbar-width:none}.tab-strip .sheet-chip{padding:6px 10px 8px;font-size:12px;gap:6px;border-radius:8px 8px 0 0}.tab-strip .chip-cnt{font-size:10px;padding:0 6px}.tab-strip .sheet-chip .ic{width:14px;height:14px}
+.sub-strip{flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:7px 0 3px;scrollbar-width:none}.sub-pill{padding:4px 10px;font-size:12px;white-space:nowrap;flex:0 0 auto;gap:6px}.sub-pill b{font-size:10px;padding:0 6px}.sub-pill.add{padding:4px 9px}
+.scope-bar{margin:0 0 8px!important;border-radius:12px!important}.scope-head{padding:6px 12px!important;align-items:center!important;flex-wrap:nowrap!important;gap:10px!important}.scope-title{display:none!important}.scope-note{font-size:12px!important}.scope-controls{margin-left:auto}.scope-field{flex-direction:row!important;align-items:center!important;gap:6px!important}.scope-field>span{display:none!important}.scope-field select{padding:5px 8px!important;font-size:12px!important;max-width:140px;min-width:0}
+.cmp-list{display:flex;flex-direction:column;gap:5px}.cmp-head,.cmp-row{display:grid;grid-template-columns:96px minmax(130px,1.2fr) minmax(110px,1fr) minmax(150px,1.5fr) 100px 26px;align-items:center;gap:10px;padding:8px 12px}.cmp-head{font-size:11px;font-weight:800;color:#8995a8;text-transform:uppercase;letter-spacing:.05em;padding-top:2px;padding-bottom:2px}.cmp-row{border:1px solid #e6ebf2;border-left:4px solid #d3dcea;border-radius:10px;background:#fff;cursor:pointer;font-size:13px}.cmp-row:hover{box-shadow:0 2px 8px #1d3a6a1f}.cmp-row.row-ok{background:#eefaf3;border-left-color:#35a66c}.cmp-row.row-bad{background:#fff0ef;border-left-color:#d2473f}.cmp-row.flash{animation:flash 3.5s ease-out}.cmp-brand{justify-self:start;font-size:11px;font-weight:800;color:#285db8;background:#e7eefc;border-radius:6px;padding:2px 7px}.cmp-model{font-weight:700}.cmp-f{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;word-break:break-all}.cmp-f i,.cmp-brk{display:none}.cmp-state{justify-self:end;color:#23804f}.row-bad .cmp-state{color:#d2473f}.more-wrap{display:flex;justify-content:center;padding:12px 0}
+body.view-compact .table-wrap{display:none}body:not(.view-compact) .cmp-list{display:none}
+@media(max-width:760px){.cmp-head{display:none}.cmp-row{display:flex;flex-wrap:wrap;gap:3px 10px;padding:8px 10px}.cmp-brand{order:1}.cmp-model{order:2;flex:1 1 40%}.cmp-state{order:3;margin-left:auto}.cmp-brk{display:block;order:4;flex-basis:100%;height:0}.cmp-f{order:5;font-size:12px}.cmp-f i{display:inline;font-style:normal;font-family:inherit;font-size:9px;font-weight:700;color:#8995a8;text-transform:uppercase;margin-right:3px}.tab-strip .chip-cnt{display:none}.seg button span{display:none}.seg button{padding:9px 11px}.top-search select{max-width:92px}}
+
+/* v30 phone fixes */
+.modal-backdrop{z-index:80!important}.top-search{z-index:20}
+@media(max-width:720px){
+ .scope-heading{display:block!important}
+ #inspectionModal .modal{padding:16px!important}
+ #inspectionModal .modal :has(> #saveInspection){position:sticky;bottom:-16px;z-index:3;background:#f7f9fc;padding:10px 0 8px;margin-top:6px;box-shadow:0 -10px 14px -10px #1c294033}
+ .topbar{padding:10px 12px!important;align-items:center!important;flex-wrap:nowrap!important;gap:8px!important}
+ .topbar h2{font-size:16px!important;line-height:1.15;flex:1;min-width:0}
+ .top-actions{flex-direction:row!important;align-items:center!important;gap:6px!important;flex:none}
+ .live-badge{padding:4px 8px;font-size:11px}.live-badge .lt{display:none}
+ .year-pill{font-size:0!important;padding:0 2px 0 6px!important;height:34px!important;gap:0!important}.year-pill select{font-size:14px!important;height:30px!important}
+ .top-search{padding:8px 10px;gap:6px}.top-search select{max-width:84px;padding:9px 4px}
+ .tab-strip{padding-left:10px;padding-right:10px}.sub-strip{padding-left:10px;padding-right:10px}
+ .sub-pill{min-height:32px}.seg button{min-height:38px}.top-search-box{min-height:38px}
+ #scopeBar{margin:6px 10px 8px!important;padding:0!important}
+ .scope-head{padding:6px 10px!important;flex-wrap:nowrap!important;gap:8px!important}.scope-heading{flex:1;min-width:0}.scope-note{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .scope-controls{width:auto!important;flex:none!important;flex-wrap:nowrap!important}.scope-field{flex:0 1 auto!important}.scope-field select{width:auto!important;max-width:130px}
+ #inventoryPanel{padding:0 10px!important;border:0!important;background:transparent!important;box-shadow:none!important}
+ #tablePage .full-table{padding:0 10px!important;border:0!important;background:transparent!important;box-shadow:none!important}
+ .more-wrap{padding:10px 0 20px}
+}
+.up-drop{display:block!important;margin:4px 0 12px;border:2px dashed #b9c8df;border-radius:14px;padding:22px 16px;text-align:center;background:#f8fafd;cursor:pointer;line-height:1.4}.up-drop:hover{background:#eef3fb;border-color:#285db8}.up-drop b{display:block;font-size:15px;color:#285db8;margin-bottom:4px}.up-drop small{display:block;color:#6d7b92}.up-drop.has-file{border-style:solid;border-color:#35a66c;background:#effaf3}.up-drop.has-file b{color:#23804f}#upCreate:disabled{opacity:.45;cursor:not-allowed}.up-hint{font-size:12px;color:#8995a8;margin-left:10px}#uploadModal .rep-actions{align-items:center}
+.up-layout{display:block;font-size:12px;font-weight:700;color:#5d6c85;margin:2px 0 8px}.up-layout select{width:100%;margin-top:5px;font-weight:400}.up-sample{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0}.up-sample th,.up-sample td{padding:5px 7px;border-bottom:1px solid #e6ebf2;text-align:left;word-break:break-all}.up-sample th{background:#f1f5fa;color:#5d6c85}.tab-selects{display:none}@media(max-width:720px){#tabStrip,#subTabStrip{display:none!important}.tab-selects{display:flex;gap:6px;padding:8px 10px;align-items:center}.tab-selects select{min-width:0;border:1px solid #cfd9e8;border-radius:10px;background:#fff;color:#1c2940;font:inherit;font-size:14px;font-weight:700;padding:10px 8px}#selGroup{flex:0 0 34%}#selTab{flex:1}#selAdd{flex:none;width:40px;height:40px;border:1px dashed #8ea6cf;border-radius:10px;background:#fff;color:#285db8;display:grid;place-items:center}#selAdd.hidden{display:none}}</style>
+</head>
+<body>
+  <section id="loginScreen" class="login-shell">
+    <header class="login-top"><div class="brand-mark">🏍</div><div><div class="brand-name">MOTORLANDIA</div><div class="brand-sub">YEAR END INVENTORY</div></div></header>
+    <main class="login-content"><div class="eyebrow hidden">YEAR-END INVENTORY • 2025</div><h1>Who’s checking today?</h1><p class="login-intro hidden">Select your profile to open your inventory workspace. Your name will be attached to every inspection record.</p><div id="checkerGrid" class="checker-grid"></div></main>
+    <footer class="login-footer">Motorlandia • Inventory &amp; Audit Monitoring</footer>
+  </section>
+
+  <div id="appShell" class="app-shell hidden">
+    
+    <main class="main-panel"><div id="offlineBanner" class="offline-banner hidden"><span>Not connected</span><button id="retryBtn" type="button">Retry</button></div>
+      <header class="topbar"><button id="menuBtn" class="burger" aria-label="Open menu" aria-expanded="false">☰</button><span id="menuLabel" class="hidden">Overview</span><div id="menuPanel" class="menu-panel hidden"><button class="menu-item" data-go="Overview">Overview</button><button class="menu-item" data-go="Checking">Motorcycle checking</button><button class="menu-item" data-go="Inspection Log">Inspection Log</button><button class="menu-item" data-conn="1">Connection settings</button></div><div class="topbar-title"><div class="crumb">Inventory Management <span>/</span> <span id="crumbTab">Overview</span></div><h2 id="pageTitle">Inventory Overview</h2></div><div class="top-actions"><span id="liveBadge" class="live-badge off"><i></i><span id="liveAgo">connecting…</span></span><label class="year-pill">YEAR END <select id="yearEnd"><option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option></select></label><button class="profile-pill" id="profileButton"><span id="topAvatar" class="mini-avatar"></span><span id="topName">CHECKER</span><span class="chevron">⌄</span></button></div></header><nav class="tabbar" aria-label="Sections"><select id="mobileNav" class="mobile-nav hidden" aria-label="Section"><option value="Overview">Overview</option><option value="Checking">Motorcycle checking</option><option value="Inspection Log">Inspection Log</option></select><button class="nav-item active" data-tab="Overview"><span class="nav-icon">▦</span>Overview</button><button class="nav-item" data-tab="Inspection Log"><span class="nav-icon">☑</span>Inspection Log <span id="navCount" class="nav-count">0</span></button><button class="nav-item hidden" id="settingsNav"><span class="nav-icon">⚙</span>Connection Settings</button><div class="tabbar-status hidden"><div class="sidebar-bottom"><div class="connection-state"><span id="stateDot" class="state-dot"></span><span id="connectionLabel">Sheets not connected</span></div><div class="side-user"><span id="sideAvatar" class="mini-avatar"></span><span><b id="sideName">CHECKER</b><small>Inventory Checker</small></span><button class="icon-button" id="logoutButton" title="Log out">↪</button></div></div></div></nav>
+      <div id="topSearchBar" class="top-search hidden"><label class="top-search-box"><svg class="ic" viewBox="0 0 24 24" width="17" height="17"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><input id="topSearch" placeholder="Search last 5 digits" inputmode="search" autocomplete="off"><button id="topClear" class="hidden" type="button" aria-label="Clear search"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></label><select id="topFilter" aria-label="Filter units"><option>All Units</option><option>Brand New</option><option>Repossessed</option><option>Not checked</option><option>Incomplete</option></select><div class="seg" role="group" aria-label="View"><button type="button" data-view="compact" title="Compact: unit, model, engine, frame, color"><svg class="ic" viewBox="0 0 24 24" width="15" height="15"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg><span>Compact</span></button><button type="button" data-view="details" title="Details: full cards"><svg class="ic" viewBox="0 0 24 24" width="15" height="15"><rect x="3" y="3" width="18" height="8" rx="2"/><rect x="3" y="13" width="18" height="8" rx="2"/></svg><span>Details</span></button></div></div>
+      <div id="tabStrip" class="tab-strip" aria-label="Sheet groups"></div>
+      <div id="subTabStrip" class="sub-strip" aria-label="Tabs in this group"></div>
+      <div id="tabSelects" class="tab-selects"><select id="selGroup" aria-label="Group"></select><select id="selTab" aria-label="Tab"></select><button id="selAdd" type="button" class="hidden" aria-label="Upload new data"><svg class="ic" viewBox="0 0 24 24" width="18" height="18"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button></div>
+      <section id="overviewPage"><div class="welcome-row" id="welcomeRow"><div><h3 id="welcomeText">Good day!</h3><p id="yearSubtitle">Here’s the current year-end inventory checking summary.</p></div><div style="display:flex;gap:9px"><button class="outline-button" id="refreshButton">↻ &nbsp; Refresh</button><button class="primary-button" id="startChecking">☑ &nbsp; Start checking</button></div></div>
+        <div class="metric-grid" id="metricGrid"><div class="metric-card"><div class="metric-top"><span>Total units</span><span class="metric-icon navy">🏍</span></div><strong id="totalCount">0</strong><small id="totalNote">Not connected to Google Sheets</small></div><div class="metric-card"><div class="metric-top"><span>Brand new</span><span class="metric-icon blue">🏍</span></div><strong id="newCount">0</strong><small>New motorcycle records</small></div><div class="metric-card"><div class="metric-top"><span>Repossessed</span><span class="metric-icon amber">↕</span></div><strong id="repoCount">0</strong><small>Repo motorcycle records</small></div><div class="metric-card"><div class="metric-top"><span>Checked</span><span class="metric-icon green"><svg class="ic" viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span></div><strong><span id="checkedCount">0</span><small id="checkedOf" class="of-total"> / 0</small></strong><div class="progress-track"><span id="progressFill" style="width:0%"></span></div><small id="checkedPercent">0% checked</small></div></div>
+        <div class="live-grid" id="livePanel"><section class="live-card"><h3>Checker progress</h3><div id="checkerBars"></div></section><section class="live-card"><h3>Live activity</h3><div id="feedList"></div></section></div>
+<div class="scope-bar hidden" id="scopeBar">
+<div class="scope-head">
+<div class="scope-heading"><span class="scope-title">Filters</span><span id="scopeNote" class="scope-note"></span></div>
+<div class="scope-controls">
+<label class="scope-field"><span>Repo year</span>
+<select id="repoYear"><option value="2025">REPO 2025</option><option value="2024">REPO 2024</option></select></label>
+<label class="scope-field"><span>Location</span>
+<select id="locFilter"><option>All Locations</option></select></label>
+</div>
+</div>
+<select id="sheetSelect" class="sheet-select" aria-label="Sheet tab"></select><div id="sheetChips" class="scope-tabs"></div>
+</div>
+
+<div class="content-grid"><section class="panel inventory-panel hidden" id="inventoryPanel"><div class="panel-heading"><div><h3>Inventory records</h3><p>Search and review motorcycles</p></div><button class="text-button" id="viewAll">View all →</button></div><div class="toolbar"><label class="search-box"><span>⌕</span><input id="searchOverview" placeholder="Last 5 digits of engine or chassis..."></label><select id="filterOverview"><option>All Units</option><option>Brand New</option><option>Repossessed</option><option>Not checked</option><option>Incomplete</option></select></div><div class="table-wrap"><table><thead><tr><th>Motorcycle</th><th>Engine / chassis</th><th>Type</th><th>Checker</th><th>Inspection</th></tr></thead><tbody id="overviewRows"></tbody></table></div><div class="cmp-list" id="cmpOverview"></div><div class="more-wrap"><button class="outline-button more-btn hidden" id="moreOverview" type="button"></button></div></section>
+          </div>
+      </section>
+      <section id="tablePage" class="panel full-table hidden"><div class="panel-heading"><div><h3 id="tableHeading">All motorcycle units</h3><p id="tableDescription">Search, filter, and open a unit to record its inspection.</p></div><span id="recordCount" class="record-count">0 records</span></div><div class="toolbar"><label class="search-box"><span>⌕</span><input id="searchTable" placeholder="Last 5 digits of engine or chassis..."></label><select id="filterTable"><option>All Units</option><option>Brand New</option><option>Repossessed</option><option>Not checked</option><option>Incomplete</option></select><select id="brandTable"><option>All Brands</option></select><button id="resetFilters" class="outline-button">⚑ &nbsp; Reset</button></div><div class="table-wrap"><table><thead><tr><th>Motorcycle</th><th>Engine / chassis</th><th>Type</th><th>Checker</th><th>Inspection</th><th>Remarks</th></tr></thead><tbody id="tableRows"></tbody></table></div><div class="cmp-list" id="cmpTable"></div><div class="more-wrap"><button class="outline-button more-btn hidden" id="moreTable" type="button"></button></div></section>
+      <footer class="main-footer"><span>Motorlandia Year End Inventory</span><span><span class="demo-dot" id="footerDot"></span><span id="footerText">Not connected to Google Sheets</span></span></footer>
+    </main>
+  </div>
+
+  <div id="inspectionModal" class="modal-backdrop hidden"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="inspectionTitle"><div class="modal-heading"><div><div class="eyebrow">UNIT INSPECTION</div><h3 id="inspectionTitle">Motorcycle</h3><p id="inspectionSubtitle">Inventory unit details</p></div><button class="icon-button" data-close="inspectionModal">✕</button></div><div id="unitDetails" class="unit-detail-grid"></div><label class="form-label">Inspection result <span>*</span></label><div class="result-options"><button id="matchedOption" type="button"><svg class="ic" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Complete</button><button id="discrepancyOption" type="button"><svg class="ic" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg> Incomplete</button></div><label class="form-label" for="remarkInput">Remarks</label><textarea id="remarkInput" placeholder="Enter why it is incomplete, physical condition, or location notes..."></textarea><div class="attribution"><span id="modalAvatar" class="mini-avatar"></span><span>Checker: <b id="modalChecker">CHECKER</b><small>Current signed-in profile</small></span></div><div class="modal-actions"><button class="outline-button" data-close="inspectionModal">Cancel</button><button class="primary-button" id="saveInspection">Save inspection</button></div></section></div>
+  <div id="reportModal" class="modal-backdrop hidden"><section class="modal rep-modal" role="dialog" aria-modal="true"><div class="modal-heading"><div><div class="eyebrow">REPORT</div><h3 id="repTitle">Inventory report</h3><p id="repSub"></p></div><button class="icon-button no-print" data-close="reportModal">✕</button></div><div id="repBody"></div><div class="rep-actions no-print"><button class="primary-button" id="repPrint">🖨 Print / Save PDF</button><button class="outline-button" id="repCsv">⬇ Download CSV</button><button class="outline-button" id="repDisc">Incomplete only (CSV)</button></div></section></div>
+<div id="uploadModal" class="modal-backdrop hidden"><section class="modal rep-modal" role="dialog" aria-modal="true"><div class="modal-heading"><div><div class="eyebrow">UPLOAD</div><h3>Upload new year data</h3><p>Creates a new tab in your Google Sheet from an Excel or CSV file. The new tab starts unchecked.</p></div><button class="icon-button" data-close="uploadModal">✕</button></div><div class="up-row"><label>Type<select id="upKind" class="settings-input"><option value="repo">Repo Units</option><option value="bn">Brand New</option></select></label><label>New tab name<input id="upName" class="settings-input" autocomplete="off"><small id="upNameNote" style="color:#c8433b"></small></label></div><label class="up-layout">Copy design from<select id="upTpl" class="settings-input"></select><span style="display:block;font-weight:400;color:#8995a8;margin-top:4px">The new tab is a copy of this tab (same title, colours and dropdowns) with the new data. Last year's AUDITOR / LOCATION become the previous-year columns.</span></label>
+<label class="up-layout">File layout<select id="upLayout" class="settings-input"><option value="auto">Auto: read the header names, otherwise fixed columns</option><option value="fixed">Fixed columns: C model · D engine · E frame · F status · G color · I encoded date · J age</option></select></label>
+<label class="up-drop" id="upDrop" for="upFile"><b id="upDropTitle">Tap here to choose a file</b><small id="upDropSub">Excel (.xls, .xlsx) or CSV</small></label><input id="upFile" type="file" accept=".xls,.xlsx,.csv,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden"><div id="upResult"></div><div class="rep-actions"><button class="primary-button" id="upCreate" disabled>Create tab in Google Sheet</button><span class="up-hint" id="upHint"></span></div></section></div>
+<div id="settingsModal" class="modal-backdrop hidden"><section class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="modal-heading"><div><div class="eyebrow">INTEGRATION</div><h3 id="settingsTitle">Google Sheets connection</h3><p>Prepare the Apps Script web app endpoint.</p></div><button class="icon-button" data-close="settingsModal">✕</button></div><div class="connection-warning"><span>▤</span><div><b id="warnTitle">Live sync is not active yet</b><p id="warnText">Paste the deployed Apps Script Web App URL (ends in /exec) to connect.</p></div></div><label class="form-label" for="scriptUrl">Apps Script Web App URL</label><input id="scriptUrl" class="settings-input" placeholder="https://script.google.com/macros/s/.../exec"><div class="helper-text">Paste the URL from Deploy &rarr; Manage deployments in Apps Script (deployed as a Web app, access: Anyone). The dashboard reads units from your sheet and writes each inspection back to it.</div><button class="outline-button" id="testConn" type="button" style="margin-top:14px">⚡ &nbsp; Test connection</button><pre id="testResult" class="hidden" style="white-space:pre-wrap;word-break:break-word;background:#f6f8fc;border:1px solid #e2e8f1;border-radius:8px;padding:12px;font-size:14px;line-height:1.55;color:#40506a;margin:12px 0 0;font-family:inherit"></pre><div class="modal-actions"><button class="outline-button" data-close="settingsModal">Cancel</button><button class="primary-button" id="saveSettings">Save URL</button></div></section></div>
+  <div id="prefsModal" class="modal-backdrop hidden"><section class="modal rep-modal" role="dialog" aria-modal="true"><div class="modal-heading"><div><div class="eyebrow">PREFERENCES</div><h3>Team &amp; settings</h3><p>Saved on this device. Version <span id="pfVer"></span>.</p></div><button class="icon-button" data-close="prefsModal">✕</button></div>
+<h4 style="margin:6px 0">Checkers</h4><div id="pfTeam"></div><button class="outline-button" id="pfAdd" type="button" style="margin:8px 0 14px">+ Add checker</button>
+<h4 style="margin:6px 0">Behaviour</h4>
+<label class="up-layout">Rows shown before “show more”<input id="pfPage" type="number" min="20" step="10" class="settings-input"></label>
+<label class="up-layout">Change check every (seconds)<input id="pfPoll" type="number" min="2" class="settings-input"></label>
+<label class="up-layout">Full reload every (seconds)<input id="pfFull" type="number" min="15" class="settings-input"></label>
+<h4 style="margin:12px 0 6px">Backup &amp; maintenance</h4>
+<div class="rep-actions" style="flex-wrap:wrap;justify-content:flex-start"><button class="outline-button" id="pfExpCsv" type="button">Export units (CSV)</button><button class="outline-button" id="pfExpJson" type="button">Export units (JSON)</button><button class="outline-button" id="pfExpCfg" type="button">Export settings</button><button class="outline-button" id="pfImpCfg" type="button">Import settings</button><button class="outline-button" id="pfClear" type="button">Clear local cache</button></div><input type="file" id="pfFile" accept=".json" class="hidden">
+<div class="rep-actions"><button class="outline-button" id="pfReset" type="button">Reset to defaults</button><button class="primary-button" id="pfSave" type="button">Save &amp; reload</button></div></section></div>
+  <div id="toast" class="toast hidden" role="status"><span class="toast-icon">✓</span><span id="toastText"></span><button id="dismissToast">✕</button></div>
+
+  <script>
+/* =====================================================================
+   MOTORLANDIA CONFIG: edit this block for most future changes.
+   Anything here can also be overridden per-device from Menu > Preferences
+   (saved in localStorage key "motorlandia_prefs_v1").
+   ===================================================================== */
+const CONFIG=(function(){
+  const base={
+    version:'v43', brand:'MOTORLANDIA',
+    scriptUrl:'https://script.google.com/macros/s/AKfycbz2IolmcHoTvbaKhg2arx_mnT5_w8x-xtpWeNx3T6zWk9wUm9c2XSwLoDbfWKTK_ifxzw/exec',
+    scriptToken:'',                 // must match SECRET_TOKEN in Code.gs
+    pageSize:100,                   // rows shown before "show more"
+    pollMs:5000,                    // lightweight "has anything changed?" check
+    fullSyncMs:60000,               // forced full reload interval
+    toastMs:9000,
+    checkers:[                      // add/remove people here or in Preferences
+      {name:'KARL',color:'#2c9d5b',role:'Inventory Checker'},
+      {name:'GENESIS',color:'#2e6ed1',role:'Inventory Checker'},
+      {name:'EDISON',color:'#d83e43',role:'Inventory Checker'},
+      {name:'LAURENCE',color:'#e6a510',role:'Inventory Checker'}
+    ],
+    // Sheet-tab grouping rules, first match wins. Add a rule to create a new group.
+    groups:[
+      {name:'Repo Units',  match:'repo'},
+      {name:'Motor Brands',match:'\\b(honda|kawasaki|suzuki|yamaha)\\b'},
+      {name:'Brand New',   match:'\\bbn\\b|brand\\s*new'}
+    ],
+    fallbackGroup:'Others'
+  };
+  try{const o=JSON.parse(localStorage.getItem('motorlandia_prefs_v1')||'{}');Object.keys(o).forEach(k=>{if(o[k]!==undefined&&o[k]!==null)base[k]=o[k]})}catch(e){}
+  return base;
+})();
+/* Tiny event bus + plugin hook for future add-ons.
+   Events: render, sync, save, ready.  Example:
+   Motorlandia.on('sync',()=>console.log('units',Motorlandia.units().length));
+   Motorlandia.addAction('My tool','Run',()=>alert('hi'));   // adds a menu entry */
+const Motorlandia=(function(){const h={},acts=[];return{
+  on(e,f){(h[e]=h[e]||[]).push(f)},
+  emit(e,d){(h[e]||[]).forEach(f=>{try{f(d)}catch(x){console.error('hook '+e,x)}})},
+  addAction(label,icon,fn){acts.push({label,icon,fn})},actions:()=>acts,
+  units:()=>units,config:CONFIG
+}})();
+var ICONS={"search":"<circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m21 21-4.3-4.3\"/>","rows":"<path d=\"M3 6h18\"/><path d=\"M3 12h18\"/><path d=\"M3 18h18\"/>","cards":"<rect x=\"3\" y=\"3\" width=\"18\" height=\"8\" rx=\"2\"/><rect x=\"3\" y=\"13\" width=\"18\" height=\"8\" rx=\"2\"/>","plus":"<path d=\"M12 5v14\"/><path d=\"M5 12h14\"/>","overview": "<rect x=\"3\" y=\"3\" width=\"7\" height=\"9\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"5\" rx=\"1\"/><rect x=\"14\" y=\"12\" width=\"7\" height=\"9\" rx=\"1\"/><rect x=\"3\" y=\"16\" width=\"7\" height=\"5\" rx=\"1\"/>", "bike": "<circle cx=\"18.5\" cy=\"17.5\" r=\"3.5\"/><circle cx=\"5.5\" cy=\"17.5\" r=\"3.5\"/><circle cx=\"15\" cy=\"5\" r=\"1\"/><path d=\"M12 17.5V14l-3-3 4-3 2 3h2\"/>", "log": "<rect x=\"8\" y=\"2\" width=\"8\" height=\"4\" rx=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/><path d=\"m9 14 2 2 4-4\"/>", "report": "<path d=\"M3 3v18h18\"/><path d=\"M18 17V9\"/><path d=\"M13 17V5\"/><path d=\"M8 17v-3\"/>", "upload": "<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"m17 8-5-5-5 5\"/><path d=\"M12 3v12\"/>", "refresh": "<path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/><path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\"/><path d=\"M8 16H3v5\"/>", "download": "<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"m7 10 5 5 5-5\"/><path d=\"M12 15V3\"/>", "settings": "<path d=\"M21 4h-7\"/><path d=\"M10 4H3\"/><path d=\"M21 12h-9\"/><path d=\"M8 12H3\"/><path d=\"M21 20h-5\"/><path d=\"M12 20H3\"/><circle cx=\"12\" cy=\"4\" r=\"2\"/><circle cx=\"10\" cy=\"12\" r=\"2\"/><circle cx=\"14\" cy=\"20\" r=\"2\"/>", "logout": "<path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"/><path d=\"m16 17 5-5-5-5\"/><path d=\"M21 12H9\"/>", "check": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/>", "alert": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 8v4\"/><path d=\"M12 16h.01\"/>", "close": "<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>", "repo": "<path d=\"m21 16-4 4-4-4\"/><path d=\"M17 20V4\"/><path d=\"m3 8 4-4 4 4\"/><path d=\"M7 4v16\"/>"},TONES={"overview": "#3b63c9|#e7eefc", "bike": "#3b63c9|#e7eefc", "log": "#7a4fd0|#efe9fb", "report": "#d9731a|#fdeede", "upload": "#b7860f|#fdf3d6", "refresh": "#13867f|#dff5f3", "download": "#2a8a52|#e2f6ea", "settings": "#5d6c85|#e9eef5", "logout": "#c8433b|#fde8e6"};
+function ico(n,sz){return '<svg class="ic" viewBox="0 0 24 24" width="'+(sz||18)+'" height="'+(sz||18)+'">'+ICONS[n]+'</svg>'}
+function icw(n){var t=TONES[n].split('|');return '<span class="dr-ic" style="color:'+t[0]+';background:'+t[1]+'">'+ico(n,18)+'</span>'}
+
+    // Profile buttons are a simple selector, not a login.
+    function hideChecking(){$('scopeBar').classList.add('hidden');$('inventoryPanel').classList.add('hidden')}
+    const initialsOf=n=>String(n||'?').replace(/[^A-Za-z]/g,'').slice(0,2).toUpperCase()||'?';
+    const checkers = CONFIG.checkers.map(c=>Object.assign({role:'Inventory Checker'},c,{initials:c.initials||initialsOf(c.name)}));
+    const defaultUnits = []
+    const $ = id => document.getElementById(id);
+    const fetchL=(u,o)=>fetch(u,Object.assign({},o||{},{signal:AbortSignal.timeout(60000)}));
+    const fetchT=(u,o)=>fetch(u,Object.assign({},o||{},{signal:AbortSignal.timeout(25000)}));
+    let activeChecker = null;
+    const SCRIPT_TOKEN = CONFIG.scriptToken||''; // must match SECRET_TOKEN in Code.gs (leave '' if unused)
+    const URL_KEY = 'motorlandia_script_url_v2';
+    const DEFAULT_SCRIPT_URL = CONFIG.scriptUrl;
+    // When this page is served by Apps Script (HtmlService), google.script.run exists and no URL is needed.
+    const SERVER_MODE = typeof google !== 'undefined' && !!google.script && !!google.script.run;
+    function gs(fn, ...args){
+      return new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(e => reject(new Error((e && e.message) || String(e))))[fn](...args);
+      });
+    }
+    let liveMode = false, syncing = false;
+    let units = SERVER_MODE ? [] : loadUnits();
+    let currentTab = 'Overview';
+    let selectedUnitId = null;
+    let repoYear = '2025', sheetFilter = 'All Tabs', locFilter = 'All Locations';
+    let yearEnd = (()=>{try{return localStorage.getItem('motorlandia_year_end')||''}catch(e){return ''}})();
+    function applyYearEnd(){$('yearEnd').value=yearEnd;$('yearSubtitle').textContent=`Here’s the current year-end ${yearEnd} inventory checking summary.`}
+    const GROUPS=['Repo Units','Brand New','Motor Brands','Others'];
+    function groupOf(n){n=String(n||'');if(/repo/i.test(n))return 'Repo Units';if(/\b(honda|kawasaki|suzuki|yamaha)\b/i.test(n))return 'Motor Brands';if(/\bbn\b|brand\s*new/i.test(n))return 'Brand New';return 'Others'}
+    let tabFilter='',lastRev='',lastFull=0,failCount=0,needFull=false,revOK=true,pageSize=CONFIG.pageSize,lastKey='',viewMode=(()=>{try{return localStorage.getItem('motorlandia_view')||'compact'}catch(e){return 'compact'}})();
+    function inGroup(u){return !tabFilter||u.sheet===tabFilter}
+    function visibleUnit(u){return tabFilter?true:!u.dup}
+    function yearMetas(){return (typeof sheetsMeta!=='undefined'&&sheetsMeta.length?sheetsMeta.slice():[...new Set(units.map(u=>u.sheet))].map(n=>({name:n,year:(units.find(u=>u.sheet===n)||{}).year}))).sort((a,b)=>(Number(a.year)||0)-(Number(b.year)||0)||(a.order||0)-(b.order||0))}
+    function presentGroups(){const names=yearMetas().map(m=>groupOf(m.name));return GROUPS.filter(g=>names.includes(g))}
+    function ensureGroup(){const g=presentGroups();if(!g.length){tabFilter='';return}if(!g.includes(sheetFilter)){sheetFilter=g[0];tabFilter=''}const tabs=yearMetas().filter(m=>groupOf(m.name)===sheetFilter);if(!tabs.some(m=>m.name===tabFilter)){const ok=tabs.filter(m=>!m.unreadable).sort((a,b)=>(Number(b.year)||0)-(Number(a.year)||0)||(a.order||0)-(b.order||0))[0]||tabs[0];tabFilter=ok?ok.name:''}const cur=tabs.find(m=>m.name===tabFilter);if(cur&&String(cur.year)!==repoYear){yearEnd=repoYear=String(cur.year);applyYearEnd()}}
+    function inScope(u){return inGroup(u)&&yearOK(u)}
+    function scoped(){return units.filter(inScope).filter(u=>locFilter==='All Locations'||u.location===locFilter)}
+    function fillLocations(){const sel=$('locFilter');if(!sel)return;const pool=units.filter(u=>inGroup(u)&&yearOK(u));const list=[...new Set(pool.map(u=>u.location).filter(Boolean))].sort();if(locFilter!=='All Locations'&&!list.includes(locFilter))locFilter='All Locations';sel.innerHTML='<option>All Locations</option>'+list.map(l=>`<option>${escapeHtml(l)}</option>`).join('');sel.value=locFilter}
+    const hasYearInName=n=>/20\d\d|\b\d{1,2}\.\d{1,2}\.\d{2}\b/.test(n||'');
+    function yearOK(u){return true}
+    let sheetsMeta=[],lastSync=0,changed=new Set(),feed=[];
+    function renderSheetChips(){const el=$('tabStrip'),sub=$('subTabStrip');if(!el)return;ensureGroup();const metas=yearMetas();const ICO={'Repo Units':'repo','Brand New':'bike','Motor Brands':'overview','Others':'log'};const LABEL={'Motor Brands':'Brands'};const ADD={'Repo Units':'repo','Brand New':'bn'};
+      el.innerHTML=presentGroups().map(g=>{const tabs=metas.filter(m=>groupOf(m.name)===g);const allBad=tabs.every(m=>m.unreadable);return `<button class="sheet-chip${g===sheetFilter?' active':''}${allBad?' dim':''}" data-sheet="${escapeHtml(g)}" title="${escapeHtml(tabs.map(m=>m.name).join(', '))}"><span class="chip-ic">${ico(ICO[g])}</span><span>${LABEL[g]||g}</span>${tabs.length>1?`<span class="chip-cnt">${tabs.length} tabs</span>`:''}</button>`}).join('');
+      const tabs=metas.filter(m=>groupOf(m.name)===sheetFilter);const pool=units.filter(u=>locFilter==='All Locations'||u.location===locFilter);
+      sub.innerHTML=(tabs.length>1||ADD[sheetFilter]?tabs.map(m=>{const p=pool.filter(u=>u.sheet===m.name);const c=p.filter(u=>u.checked).length;return `<button class="sub-pill${m.name===tabFilter?' active':''}${m.unreadable?' dim':''}" data-tab="${escapeHtml(m.name)}" title="${m.unreadable?'No Engine/Chassis headers found in this tab':''}">${escapeHtml(m.name)}<b>${m.unreadable?'–':c+'/'+p.length}</b></button>`}).join(''):'')+(ADD[sheetFilter]?`<button class="sub-pill add" data-add="${ADD[sheetFilter]}" title="Upload new data (creates a new tab in Google Sheets)">${ico('plus')}</button>`:'');
+      const sg=$('selGroup');if(sg){sg.innerHTML=presentGroups().map(g=>`<option value="${escapeHtml(g)}"${g===sheetFilter?' selected':''}>${LABEL[g]||g}</option>`).join('');$('selTab').innerHTML=tabs.map(m=>{const p=pool.filter(u=>u.sheet===m.name);return `<option value="${escapeHtml(m.name)}"${m.name===tabFilter?' selected':''}>${escapeHtml(m.name)}${m.unreadable?' (not readable)':' · '+p.filter(u=>u.checked).length+'/'+p.length}</option>`}).join('');const sa=$('selAdd');sa.dataset.add=ADD[sheetFilter]||'';sa.classList.toggle('hidden',!ADD[sheetFilter])}
+      $('scopeNote').textContent=`${scoped().length} units in ${tabFilter||sheetFilter}${locFilter!=='All Locations'?' • '+locFilter:''}`}
+    function renderLive(){const U=scoped();$('checkerBars').innerHTML=checkers.map(c=>{const m=U.filter(u=>u.checker===c.name),bad=m.filter(isIssue).length;return `<div class="cbar"><div><span style="display:inline;background:none;height:auto">${c.name}</span><span style="display:inline;background:none;height:auto;font-weight:600;color:#8995a8">${m.length} checked${bad?' · '+bad+' incomplete':''}</span></div><span><em style="width:${U.length?m.length/U.length*100:0}%;background:${c.color}"></em></span></div>`}).join('');const items=feed.length?feed.map(f=>f.u):U.filter(u=>u.checked).sort((a,b)=>b.row-a.row).slice(0,8);$('feedList').innerHTML=items.length?items.slice(0,8).map(u=>`<div class="feed-item"><span class="type-tag ${isIssue(u)?'issue-tag':'done-tag'}" style="padding:2px 8px">${isIssue(u)?ico('alert'):ico('check')}</span><span><b>${escapeHtml(u.brand)} ${escapeHtml(u.model)}</b> <small style="margin:0">${escapeHtml(String(u.engine).slice(-5))}</small></span><small>${escapeHtml(u.checker)}</small></div>`).join(''):'<div class="feed-item">No checks yet. They will appear here live.</div>'}
+    function trackChanges(old){const m=new Map(old.map(u=>[u.id,u])),who={};let n=0;changed=new Set();units.forEach(u=>{const o=m.get(u.id);if(old.length&&u.checked&&(!o||!o.checked||o.inspection!==u.inspection)){changed.add(u.id);n++;who[u.checker]=(who[u.checker]||0)+1;feed.unshift({u})}});feed=feed.slice(0,12);if(n)showToast(`${n} unit${n>1?'s':''} just checked: `+Object.entries(who).map(([k,v])=>k+' '+v).join(', '));lastSync=Date.now();setTimeout(()=>{changed=new Set()},4000)}
+    function syncYears(){const ys=[...new Set([...sheetsMeta.map(s=>String(s.year)),...units.map(u=>String(u.year))].filter(Boolean))].sort().reverse();if(!ys.length)return;if(!ys.includes(yearEnd))yearEnd=ys[0];$('yearEnd').innerHTML=ys.map(y=>`<option>${y}</option>`).join('');repoYear=yearEnd;applyYearEnd()}
+    function setSheet(n){sheetFilter=n;tabFilter='';renderAll()}
+    let inspectionResult = '';
+    let toastTimer = null;
+    function loadUnits(){return []}
+    function persistDemo(){}
+    function isIssue(u){return u.inspection?u.inspection==='DISCREPANCY':!!(u.remarks&&u.remarks.trim())}
+    function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
+    function avatarHTML(c,small=false){return `<span class="${small?'checker-avatar small':'checker-avatar'}" style="background:${c.color}">${c.initials}</span>`}
+    function renderCheckerCards(){ $('checkerGrid').innerHTML=checkers.map((c,i)=>`<button class="checker-card" data-checker="${c.name}">${avatarHTML(c)}<span class="checker-info"><b>${c.name}</b><small>${c.role}</small><em style="color:${c.color}">Open workspace ↗</em></span><span class="checker-number" style="color:${c.color};border-color:${c.color}">${String(i+1).padStart(2,'0')}</span></button>`).join('') }
+    function enterWorkspace(name){activeChecker=checkers.find(c=>c.name===name)||null;if(!activeChecker)return;$('loginScreen').classList.add('hidden');$('appShell').classList.remove('hidden');updateUserChrome();showTab('Overview');hideChecking();renderAll();try{const c=localStorage.getItem('motorlandia_units_cache');if(c&&!units.length){units=JSON.parse(c);renderAll();}}catch(e){}if(getScriptUrl())loadFromSheet(true)}
+    function logout(){activeChecker=null;$('appShell').classList.add('hidden');$('loginScreen').classList.remove('hidden');hideModal('inspectionModal');hideModal('settingsModal')}
+    function updateUserChrome(){const c=activeChecker;if(!c)return;['sideAvatar','topAvatar','modalAvatar'].forEach(id=>{const el=$(id);el.textContent=c.initials;el.style.background=c.color});$('sideName').textContent=c.name;$('topName').textContent=c.name;$('modalChecker').textContent=c.name;$('welcomeText').textContent=`Good day, ${c.name[0]+c.name.slice(1).toLowerCase()}!`}
+    function showTab(tab){currentTab=tab;document.querySelectorAll('.nav-item[data-tab]').forEach(btn=>btn.classList.toggle('active',btn.dataset.tab===tab));$('crumbTab').textContent=tab;$('pageTitle').textContent=tab==='Overview'?'Inventory Overview':tab==='Inventory List'?'Motorcycle Inventory':'Inspection Log';$('overviewPage').classList.toggle('hidden',tab!=='Overview');$('tablePage').classList.toggle('hidden',tab==='Overview');$('tableHeading').textContent=tab==='Inventory List'?'All motorcycle units':'Recent inspection activity';$('tableDescription').textContent=tab==='Inventory List'?'Search, filter, and open a unit to record its inspection.':'The checker name is recorded with every inspection result.';renderAll()}
+    function stats(){const U=scoped();return {total:U.length,brandNew:U.filter(u=>u.inventory==='Brand New').length,repo:U.filter(u=>u.inventory==='Repossessed').length,checked:U.filter(u=>u.checked).length,issues:U.filter(isIssue).length}}
+    function renderStats(){const s=stats();$('totalCount').textContent=s.total;$('totalNote').textContent=liveMode?'Loaded from Google Sheets':'Not connected to Google Sheets';$('newCount').textContent=s.brandNew;$('repoCount').textContent=s.repo;$('checkedCount').textContent=s.checked;$('checkedOf').textContent=` / ${s.total}`;$('checkedPercent').textContent=`${Math.round(s.checked/Math.max(s.total,1)*100)}% checked${s.issues?' · '+s.issues+' incomplete':''}`;$('progressFill').style.width=`${s.checked/Math.max(s.total,1)*100}%`;$('navCount').textContent=s.checked}
+    function locOptions(current){const set=new Set(units.flatMap(x=>[x.location,x.locationPrev]).filter(Boolean));if(current)set.add(current);const list=[...set].sort();return '<option value="">Select location</option>'+list.map(l=>`<option value="${escapeHtml(l)}"${l===current?' selected':''}>${escapeHtml(l)}</option>`).join('')}
+    function locText(u){return [u.branch,u.location].filter(Boolean).join(' / ')||'—'}
+    function matchesFilter(u,f){if(!f||f==='All Units')return true;if(f==='Brand New'||f==='Repossessed')return u.inventory===f;if(f==='Not checked')return !u.checked;if(f==='Incomplete')return u.checked&&isIssue(u);return true}
+    function filteredUnits(search,filter,brand){const q=search.trim().toLowerCase();return scoped().filter(u=>matchesFilter(u,filter)&&(!brand||brand==='All Brands'||u.brand===brand)&&matchSearch(u,q))}
+    function matchSearch(u,q){if(!q)return true;const clean=x=>String(x||'').replace(/[^a-z0-9]/gi,'').toLowerCase(),qq=clean(q);const ends=!!qq&&[u.engine,u.chassis].some(v=>clean(v).endsWith(qq));if(ends)return true;return [u.brand,u.model,u.branch,u.location,u.checker,u.remarks,u.color].join(' ').toLowerCase().includes(q)}
+    function fillBrands(){const sel=$('brandTable');if(!sel)return;const cur=sel.value;const list=[...new Set(scoped().map(u=>u.brand).filter(Boolean))].sort();sel.innerHTML='<option>All Brands</option>'+list.map(b=>`<option>${escapeHtml(b)}</option>`).join('');if(list.includes(cur))sel.value=cur}
+    function rowHTML(u,expanded=false){const state=!u.checked?'Pending':isIssue(u)?'Incomplete':'Complete';const stateClass=!u.checked?'pending-tag':isIssue(u)?'issue-tag':'done-tag';return `<tr class="click-row${changed.has(u.id)?' flash':''}${u.checked?(isIssue(u)?' row-bad':' row-ok'):''}" data-unit-id="${escapeHtml(u.id)}"><td data-label="Motorcycle"><div class="bike-cell"><span class="bike-icon">${ico('bike',20)}</span><span><b>${escapeHtml(u.brand)} ${escapeHtml(u.model)}</b><small>${escapeHtml([u.branch,u.location,u.color].filter(Boolean).join(' • ')||'—')}</small></span></div></td><td data-label="Engine"><b class="engine-text">${escapeHtml(u.engine)}</b><small class="sub-cell">${escapeHtml(u.chassis)}</small></td><td data-label="Type"><span class="type-tag ${u.inventory==='Brand New'?'new-tag':'repo-tag'}">${escapeHtml(u.inventory)}</span></td><td data-label="Checker">${u.checker?`<span class="checker-name">${escapeHtml(u.checker)}</span>`:'<span class="unassigned">Not checked</span>'}</td><td data-label="Status"><span class="inspection-tag ${stateClass}"><span></span>${state}</span></td>${expanded?`<td class="remark-cell" data-label="Remarks">${escapeHtml(u.remarks||'—')}</td>`:''}</tr>`}
+    function renderTables(){const overview=filteredUnits($('searchOverview').value,$('filterOverview').value).slice(0,pageSize);$('overviewRows').innerHTML=overview.length?overview.map(u=>rowHTML(u)).join(''):'<tr><td colspan="5" class="empty-state">No matching inventory records found.</td></tr>';let list=filteredUnits($('searchTable').value,$('filterTable').value,$('brandTable').value);if(currentTab==='Inspection Log')list=list.filter(u=>u.checked);$('recordCount').textContent=`${list.length} records`;$('tableRows').innerHTML=list.length?list.slice(0,pageSize).map(u=>rowHTML(u,true)).join(''):'<tr><td colspan="6" class="empty-state">No matching inventory records found.</td></tr>'}
+    function renderAll(){ensureGroup();renderLive();renderSheetChips();fillLocations();renderStats();fillBrands();renderTables();updateUserChrome()}
+    function openInspection(id){const u=units.find(x=>String(x.id)===String(id));if(!u)return;selectedUnitId=u.id;inspectionResult=u.checked?(isIssue(u)?'Discrepancy':'Matched'):'';$('inspectionTitle').textContent=`${u.brand} ${u.model}`;$('inspectionSubtitle').textContent=`${u.inventory} • ${locText(u)}`;$('unitDetails').innerHTML=`<div><small>Engine number</small><b>${escapeHtml(u.engine)}</b></div><div><small>Chassis / frame</small><b>${escapeHtml(u.chassis)}</b></div><div><small>Color</small><b>${escapeHtml(u.color)}</b></div><div><small>System status</small><b>${escapeHtml(u.status)}</b></div><div><small>Completion</small><b>${escapeHtml(u.completion||'—')}</b></div><div><small>Location 2025</small><select id="locSelect" class="loc-select">${locOptions(u.location)}</select></div><div><small>Auditor 2025</small><b>${escapeHtml(u.checker||'—')}</b></div><div><small>Previous location (2024)</small><b>${escapeHtml(u.locationPrev||'—')}</b></div><div><small>Previous auditor (2024)</small><b>${escapeHtml(u.checkerPrev||'—')}</b></div><div><small>Remarks</small><b>${escapeHtml(u.remarks||'—')}</b></div>`;$('remarkInput').value=u.remarks||'';$('matchedOption').classList.toggle('chosen',inspectionResult==='Matched');$('discrepancyOption').classList.toggle('chosen',inspectionResult==='Discrepancy');$('discrepancyOption').classList.toggle('issue',inspectionResult==='Discrepancy');updateUserChrome();showModal('inspectionModal')}
+    async function saveInspection(){
+      if(!selectedUnitId)return;
+      if(!inspectionResult){showToast('Please select an inspection result before saving.');return}
+      const u=units.find(x=>String(x.id)===String(selectedUnitId));if(!u)return;
+      const remarks=inspectionResult==='Discrepancy'?$('remarkInput').value.trim():'';
+      const checker=activeChecker?activeChecker.name:'UNKNOWN';
+      const url=getScriptUrl();
+      if(!url){
+        Object.assign(u,{checked:true,checker,inspection:inspectionResult.toUpperCase(),remarks,checkedAt:new Date().toISOString()});
+        persistDemo();hideModal('inspectionModal');renderAll();
+        showToast('Google Sheets is not connected. Open Connection Settings.');return;
+      }
+      if(!liveMode){showToast('Not connected to Google Sheets yet. Open Connection Settings or press Refresh, then try again.');return}
+      const btn=$('saveInspection');btn.disabled=true;btn.textContent='Saving…';
+      try{
+        const payload={action:'saveInspection',token:SCRIPT_TOKEN,sheet:u.sheet,row:u.row,engine:u.engine,chassis:u.chassis,result:inspectionResult.toUpperCase(),remarks,checker,location:($('locSelect')?$('locSelect').value:'')};
+        const data=SERVER_MODE?await gs('apiSaveInspection',payload):await readJson(await fetchT(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}));
+        if(!data.ok)throw new Error(data.error||'Save failed');
+        Object.assign(u,{location:(($('locSelect')?$('locSelect').value:'')||u.location),checked:true,checker:checker.toUpperCase(),inspection:inspectionResult.toUpperCase(),remarks,checkedAt:data.checkedAt,row:data.row,id:data.id});
+        hideModal('inspectionModal');renderAll();showToast('Saved to Google Sheets.');loadFromSheet(true);
+      }catch(err){
+        showToast('Could not save to Google Sheets: '+explainError(err));
+      }finally{btn.disabled=false;btn.textContent='Save inspection'}
+    }
+    async function readJson(res){
+      const text=await res.text();
+      try{return JSON.parse(text)}catch(e){
+        if(/<html|<!doctype/i.test(text)){
+          if(/accounts\.google\.com|Sign in|ServiceLogin/i.test(text))throw new Error('Google asked for sign-in. In Apps Script set Deploy > Manage deployments > Who has access = Anyone, then create a New version.');
+          throw new Error('Google returned an error page instead of data. Open the /exec URL in a new tab to see the message (usually: script not authorized, or a script error).');
+        }
+        throw new Error('Unexpected response from the script.');
+      }
+    }
+    function explainError(err){
+      if(err&&err.name==='TypeError')return 'The browser could not reach the script (blocked or access not set to Anyone). Open the saved .html file directly in Chrome, and make sure the deployment access is Anyone.';
+      return err.message;
+    }
+    function normalizeUrl(v){return String(v||'').replace(/\s+/g,'').split('#')[0].split('?')[0].replace(/\/macros\/u\/\d+\/s\//,'/macros/s/')}
+    function checkUrl(u){
+      if(!u)return 'Paste your Web App URL first.';
+      if(/script\.googleusercontent\.com/.test(u))return 'That is a temporary result address. Use the Web app URL from Deploy > Manage deployments.';
+      if(/\/dev$/.test(u))return 'That URL ends in /dev (test deployment). Use the Web app URL that ends in /exec.';
+      if(!/^https:\/\/script\.google\.com\/(a\/macros\/[^\/]+|macros)\/s\/[^\/]+\/exec$/.test(u))return 'This does not look like a Web App URL. It should look like https://script.google.com/macros/s/AKfy.../exec';
+      return '';
+    }
+    function getScriptUrl(){if(SERVER_MODE)return 'SERVER';let saved='';try{saved=normalizeUrl(localStorage.getItem(URL_KEY)||'')}catch(e){}return(saved&&!checkUrl(saved))?saved:normalizeUrl(DEFAULT_SCRIPT_URL)}
+    async function testConnection(){
+      const out=$('testResult');out.classList.remove('hidden');
+      const url=normalizeUrl($('scriptUrl').value);
+      const bad=checkUrl(url);
+      if(bad){out.textContent=bad;return}
+      out.textContent='Testing…\n'+url;
+      try{
+        const res=await fetch(`${url}?action=units&token=${encodeURIComponent(SCRIPT_TOKEN)}&t=${Date.now()}`);
+        const text=await res.text();let msg=`HTTP ${res.status}\n`;
+        try{
+          const j=JSON.parse(text);
+          if(j.ok){msg+=`Connected OK.\nScript version: ${j.version||'OLD (no version). Paste the newest Code.gs and deploy a New version.'}\nUnits found: ${j.units.length}\nTabs read: ${(j.sheets||[]).map(x=>x.name+' ('+x.rows+')').join(', ')||'none (no tab with recognised Engine / Chassis headers)'}`}
+          else msg+=`The script replied with an error:\n${j.error}`;
+        }catch(e){
+          msg+=/accounts\.google\.com|Sign in|ServiceLogin/i.test(text)?'Google asked for sign-in. Set Who has access = Anyone, then deploy a New version.':'The reply was not JSON. First 200 characters:\n'+text.replace(/\s+/g,' ').slice(0,200);
+        }
+        out.textContent=msg;
+      }catch(err){
+        out.textContent=`The browser could not reach this URL (${err.name}: ${err.message}).\nCommon causes: the page is opened inside a preview that blocks outside requests (download the file and open it in Chrome), deployment access is not Anyone, or no internet.`;
+      }
+    }
+    function setConn(label,online,footer){const bad=!online&&!/Connecting/.test(label);$('offlineBanner').classList.toggle('hidden',!bad);$('offlineBanner').querySelector('span').textContent=label;$('connectionLabel').textContent=label;$('stateDot').classList.toggle('online',online);$('footerText').textContent=footer;$('footerDot').style.background=online?'#35a66c':'#e5a33b'}
+    async function loadFromSheet(silent){
+      const url=getScriptUrl();
+      if(!url){liveMode=false;setConn('Sheets not connected',false,'Not connected to Google Sheets');renderAll();return false}
+      if(syncing)return false;
+      syncing=true;
+      try{
+        const data=SERVER_MODE?await gs('apiGetUnits',SCRIPT_TOKEN):await readJson(await fetchL(`${url}${url.includes('?')?'&':'?'}action=units&token=${encodeURIComponent(SCRIPT_TOKEN)}&t=${Date.now()}`));
+        if(!data.ok)throw new Error(data.error||'Unknown error');
+        failCount=0;needFull=false;lastFull=Date.now();if(data.rev!==undefined)lastRev=String(data.rev);
+        const oldUnits=units;units=data.units.map(u=>({...u,remarks:u.remarks||'',checker:u.checker||'',inspection:u.inspection||''}));
+        liveMode=true;sheetsMeta=data.sheets||[];trackChanges(oldUnits);syncYears();try{localStorage.setItem('motorlandia_units_cache',JSON.stringify(units))}catch(e){}
+        const t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+        setConn('Live: Google Sheets',true,`Synced with Google Sheets • ${units.length} units • updated ${t}`);
+        renderAll();
+        if(!units.length)showToast('Connected, but no inventory rows were found. Check that your sheet headers include Engine / Chassis columns.');
+        else if(!silent)showToast(`Loaded ${units.length} units from Google Sheets.`);
+        return true;
+      }catch(err){
+        failCount++;needFull=true;
+        if(!silent||failCount>=2||!liveMode)setConn(liveMode?'Sync problem, retrying':'Connection failed',false,liveMode?'Could not refresh from Google Sheets • showing last loaded data':'Could not reach Google Sheets');
+        console.error('Sheet load failed',err);if(!silent)showToast('Could not load from Google Sheets: '+explainError(err));
+        renderAll();return false;
+      }finally{syncing=false}
+    }
+    function showModal(id){$(id).classList.remove('hidden')}function hideModal(id){$(id).classList.add('hidden')}
+    function showToast(message){clearTimeout(toastTimer);$('toastText').textContent=message;$('toast').classList.remove('hidden');toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),CONFIG.toastMs)}
+    function openSettings(){if(SERVER_MODE){showToast('Already connected: this page is served directly by your Apps Script, so no URL is needed.');return}$('scriptUrl').value=getScriptUrl();$('testResult').classList.add('hidden');$('warnTitle').textContent=liveMode?'Live sync is active':'Live sync is not active yet';$('warnText').textContent=liveMode?'Inspections are written to your Google Sheet and this dashboard refreshes every minute.':'Paste the deployed Apps Script Web App URL (ends in /exec) to connect.';showModal('settingsModal')}
+    async function saveSettings(){
+      const value=normalizeUrl($('scriptUrl').value)||normalizeUrl(DEFAULT_SCRIPT_URL);
+      if(value){const bad=checkUrl(value);if(bad){showToast(bad);return}}
+      try{localStorage.setItem(URL_KEY,value)}catch(e){}
+      hideModal('settingsModal');liveMode=false;
+      if(!value){units=loadUnits();setConn('Sheets not connected',false,'Not connected to Google Sheets');renderAll();showToast('Connection cleared.');return}
+      setConn('Connecting…',false,'Connecting to Google Sheets…');
+      await loadFromSheet(false);
+    }
+    document.addEventListener('click',e=>{const checkerButton=e.target.closest('[data-checker]');if(checkerButton){enterWorkspace(checkerButton.dataset.checker);return}const nav=e.target.closest('[data-tab]');if(nav){showTab(nav.dataset.tab);return}const row=e.target.closest('[data-unit-id]');if(row){openInspection(row.dataset.unitId);return}const sc=e.target.closest('[data-sheet]');if(sc){setSheet(sc.dataset.sheet);return}const close=e.target.closest('[data-close]');if(close){hideModal(close.dataset.close);return}});
+    $('logoutButton').addEventListener('click',logout);$('profileButton').addEventListener('click',logout);$('startChecking').addEventListener('click',()=>showTab('Checking'));$('viewAll').addEventListener('click',()=>showTab('Checking'));$('settingsNav').addEventListener('click',openSettings);$('matchedOption').addEventListener('click',()=>{inspectionResult='Matched';$('matchedOption').classList.add('chosen');$('discrepancyOption').classList.remove('chosen','issue')});$('discrepancyOption').addEventListener('click',()=>{inspectionResult='Discrepancy';$('discrepancyOption').classList.add('chosen','issue');$('matchedOption').classList.remove('chosen')});$('saveInspection').addEventListener('click',saveInspection);$('saveSettings').addEventListener('click',saveSettings);$('testConn').addEventListener('click',testConnection);$('dismissToast').addEventListener('click',()=>$('toast').classList.add('hidden'));$('refreshButton').addEventListener('click',()=>{if(getScriptUrl())loadFromSheet(false);else showToast('Google Sheets is not connected yet. Open Connection Settings and paste your Web App URL.')});
+    ['searchOverview','filterOverview','searchTable','filterTable','brandTable'].forEach(id=>$(id).addEventListener(id.startsWith('search')?'input':'change',renderTables));$('resetFilters').addEventListener('click',()=>{$('searchTable').value='';$('filterTable').value='All Units';$('brandTable').value='All Brands';renderTables()});
+    ['inspectionModal','settingsModal'].forEach(id=>$(id).addEventListener('click',e=>{if(e.target===$(id))hideModal(id)}));document.addEventListener('keydown',e=>{if(e.key==='Escape'){hideModal('inspectionModal');hideModal('settingsModal')}});
+    $('repoYear').addEventListener('change',e=>{repoYear=e.target.value;renderAll()});
+    $('locFilter').addEventListener('change',e=>{locFilter=e.target.value;renderAll()});
+    $('yearEnd').addEventListener('change',e=>{yearEnd=e.target.value;try{localStorage.setItem('motorlandia_year_end',yearEnd)}catch(x){}applyYearEnd()});
+    applyYearEnd();
+    renderCheckerCards();renderStats();
+    if(getScriptUrl()){setConn('Connecting…',false,'Connecting to Google Sheets…');loadFromSheet(true)}
+    setInterval(()=>{if(activeChecker&&getScriptUrl()&&$('inspectionModal').classList.contains('hidden')&&$('settingsModal').classList.contains('hidden'))loadFromSheet(true)},CONFIG.fullSyncMs);
+  
+    const TAB_TITLES = {Overview:'Inventory Overview', Checking:'Motorcycle checking', 'Inspection Log':'Inspection Log'};
+    showTab = function(tab){
+      currentTab = tab;
+      document.querySelectorAll('.nav-item[data-tab]').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+      $('mobileNav').value = tab; $('menuLabel').textContent = TAB_TITLES[tab] || tab;
+      $('crumbTab').textContent = TAB_TITLES[tab] || tab;
+      $('pageTitle').textContent = TAB_TITLES[tab] || tab;
+      const log = tab==='Inspection Log', checking = tab==='Checking';
+      $('overviewPage').classList.toggle('hidden', log);
+      $('welcomeRow').classList.toggle('hidden', checking);
+      $('metricGrid').classList.toggle('hidden', checking);
+      $('scopeBar').classList.toggle('hidden', !checking);$('livePanel').classList.toggle('hidden', tab!=='Overview');$('topSearchBar').classList.toggle('hidden', tab==='Overview');
+      $('inventoryPanel').classList.toggle('hidden', !checking);
+      $('tablePage').classList.toggle('hidden', !log);
+      $('tableHeading').textContent = 'Recent inspection activity';
+      $('tableDescription').textContent = 'Units that have been checked, newest first.';
+      window.scrollTo(0,0);
+      renderAll();
+    };
+    $('mobileNav').addEventListener('change', e=>showTab(e.target.value));
+
+    $('menuBtn').addEventListener('click',()=>{const open=!$('menuPanel').classList.toggle('hidden');$('menuBtn').setAttribute('aria-expanded',String(open));});
+    document.querySelectorAll('.menu-item').forEach(b=>b.addEventListener('click',()=>{$('menuPanel').classList.add('hidden');$('menuBtn').setAttribute('aria-expanded','false');if(b.dataset.go)showTab(b.dataset.go);else openSettings();}));
+
+    document.addEventListener('click',e=>{if(!e.target.closest('#menuBtn,#menuPanel')){$('menuPanel').classList.add('hidden');$('menuBtn').setAttribute('aria-expanded','false');}});
+
+    (function(){
+      const sel = $('sheetSelect'), chips = $('sheetChips');
+      function sync(){
+        const btns = [...chips.querySelectorAll('.sheet-chip')];
+        sel.innerHTML = btns.map(b => `<option value="${escapeHtml(b.dataset.sheet)}">${escapeHtml(b.children[1].textContent)} (${escapeHtml(b.children[2].textContent)})</option>`).join('');
+        const active = btns.find(b => b.classList.contains('active'));
+        if (active) sel.value = active.dataset.sheet;
+      }
+      sel.addEventListener('change', () => setSheet(sel.value));
+      new MutationObserver(sync).observe(chips, {childList:true, subtree:true, attributes:true, attributeFilter:['class']});
+      sync();
+    })();
+
+
+    $('yearEnd').addEventListener('change',()=>{repoYear=yearEnd;const ms=yearMetas().filter(m=>hasYearInName(m.name)&&String(m.year)===yearEnd);const t=ms.find(m=>groupOf(m.name)===sheetFilter)||ms[0];if(t){sheetFilter=groupOf(t.name);tabFilter=t.name}renderAll()});
+    setInterval(()=>{const b=$('liveBadge');if(!activeChecker){return}const s=Math.round((Date.now()-lastSync)/1000);b.classList.toggle('off',!liveMode);$('liveAgo').innerHTML=liveMode?`LIVE<span class="lt"> · updated ${s<5?'just now':s+'s ago'}</span>`:'Offline'},1000);
+    setInterval(pollRev,CONFIG.pollMs);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden&&activeChecker&&getScriptUrl())loadFromSheet(true)});
+
+    /* ---------- v21: duplicates, drawer, report, upload ---------- */
+    scoped=function(){return units.filter(inScope).filter(u=>locFilter==='All Locations'||u.location===locFilter).filter(visibleUnit)};
+    const dl=(name,text)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+text],{type:'text/csv'}));a.download=name;a.click()};
+    const csvCell=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+    const csvOf=list=>['Tab,Inventory,Brand,Model,Engine,Chassis,Branch,Location 2025,Location 2024,Auditor,Auditor 2024,Result,Remarks'].concat(list.map(u=>[u.sheet,u.inventory,u.brand,u.model,u.engine,u.chassis,u.branch,u.location,u.locationPrev,u.checker,u.checkerPrev,u.checked?(isIssue(u)?'INCOMPLETE':'COMPLETE'):'UNCHECKED',u.remarks].map(csvCell).join(','))).join('\n');
+    const pct=(a,b)=>b?Math.round(a/b*100)+'%':'–';
+    function openModal(id){$(id).classList.remove('hidden')}
+    function repTable(h,rows){return `<table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map(x=>`<td>${escapeHtml(x)}</td>`).join('')}</tr>`).join('')}</table>`}
+    function openReport(){const U=scoped(),chk=U.filter(u=>u.checked),bad=U.filter(isIssue);const metas=(sheetsMeta||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
+      $('repTitle').textContent=`Inventory report • ${repoYear}`;$('repSub').textContent=`${sheetFilter} › ${tabFilter} • ${locFilter} • generated ${new Date().toLocaleString()} by ${activeChecker?activeChecker.name:''}`;
+      const byLoc={};U.forEach(u=>{const k=u.location||'(no location)';(byLoc[k]=byLoc[k]||[0,0]);byLoc[k][0]++;if(u.checked)byLoc[k][1]++});
+      $('repBody').innerHTML=`<div class="rep-kpi"><div><small>Units</small><b>${U.length}</b></div><div><small>Checked</small><b>${chk.length} <small>${pct(chk.length,U.length)}</small></b></div><div><small>Remaining</small><b>${U.length-chk.length}</b></div><div><small>Incomplete</small><b>${bad.length}</b></div></div>
+      <h4>Coverage by Google Sheet tab (all visible tabs)</h4>${repTable(['Tab','Rows','Checked','Duplicates of other tabs','Status'],metas.map(m=>{const p=units.filter(u=>u.sheet===m.name&&yearOK(u));return [m.name,m.unreadable?'–':p.length,m.unreadable?'–':p.filter(u=>u.checked).length+' ('+pct(p.filter(u=>u.checked).length,p.length)+')',p.filter(u=>u.dup).length,m.unreadable?'NOT READ – header not found':'OK']}))}
+      <h4>By checker</h4>${repTable(['Checker','Checked','Incomplete'],checkers.map(c=>[c.name,chk.filter(u=>u.checker===c.name).length,bad.filter(u=>u.checker===c.name).length]))}
+      <h4>By brand</h4>${repTable(['Brand','Units','Checked'],Object.entries(U.reduce((o,u)=>{const k=u.brand||'(none)';(o[k]=o[k]||[0,0]);o[k][0]++;if(u.checked)o[k][1]++;return o},{})).map(([k,v])=>[k,v[0],v[1]+' ('+pct(v[1],v[0])+')']))}
+      <h4>By location</h4>${repTable(['Location','Units','Checked'],Object.entries(byLoc).sort((a,b)=>b[1][0]-a[1][0]).map(([k,v])=>[k,v[0],v[1]]))}
+      <h4>Incomplete units (${bad.length})</h4>${bad.length?repTable(['Tab','Unit','Engine','Auditor','Remarks'],bad.slice(0,200).map(u=>[u.sheet,u.brand+' '+u.model,u.engine,u.checker,u.remarks])):'<p>None.</p>'}`;openModal('reportModal')}
+    $('repPrint').onclick=()=>window.print();
+    $('repCsv').onclick=()=>dl(`motorlandia_report_${repoYear}.csv`,csvOf(scoped()));
+    $('repDisc').onclick=()=>dl(`motorlandia_incomplete_${repoYear}.csv`,csvOf(scoped().filter(isIssue)));
+    function parseCsv(t){const rows=[];let r=[],c='',q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch=='"'&&t[i+1]=='"'){c+='"';i++}else if(ch=='"')q=false;else c+=ch}else if(ch=='"')q=true;else if(ch==','){r.push(c);c=''}else if(ch=='\n'||ch=='\r'){if(ch=='\r'&&t[i+1]=='\n')i++;r.push(c);c='';if(r.some(x=>x.trim()))rows.push(r);r=[]}else c+=ch}r.push(c);if(r.some(x=>x.trim()))rows.push(r);return rows}
+    const UP={kind:'repo',headers:[],rows:[]},UPG={repo:'Repo Units',bn:'Brand New'};
+    function nextTabName(k){const ms=yearMetas().filter(m=>groupOf(m.name)===UPG[k]&&hasYearInName(m.name));const y=ms.length?Math.max(...ms.map(m=>Number(m.year)||0))+1:new Date().getFullYear();return (k==='repo'?'REPO UNIT ':'FINAL BN ')+y}
+    function tabExists(n){return yearMetas().some(m=>m.name.trim().toLowerCase()===n.trim().toLowerCase())}
+    function fillTpl(){const tabs=yearMetas().filter(m=>groupOf(m.name)===UPG[UP.kind]&&!m.unreadable);const best=(tabs.filter(m=>/final/i.test(m.name)).sort((a,b)=>(Number(b.year)||0)-(Number(a.year)||0))[0])||tabs.slice().sort((a,b)=>(Number(b.year)||0)-(Number(a.year)||0)||(b.order||0)-(a.order||0))[0];$('upTpl').innerHTML=tabs.map(m=>`<option value="${escapeHtml(m.name)}"${best&&m.name===best.name?' selected':''}>${escapeHtml(m.name)}</option>`).join('')+'<option value="">None (plain new tab)</option>'}
+    function updUpBtn(){const n=$('upName').value.trim();let note='';if(!n)note='Enter a tab name.';else if(tabExists(n))note='A tab with this name already exists.';else if(UP.kind==='repo'&&!/repo/i.test(n))note='A repo tab name must contain REPO.';else if(UP.kind==='bn'&&!/\bbn\b|brand\s*new/i.test(n))note='A brand new tab name must contain BN.';else if(!getScriptUrl()&&!SERVER_MODE)note='Connect Google Sheets first (Connection settings).';$('upNameNote').textContent=note;$('upCreate').disabled=!(UP.rows.length&&!note);$('upHint').textContent=!UP.rows.length?'Choose a CSV file first.':(note?'':'Ready.')}
+    function layoutText(){const o=$('upLayout').querySelector('option[value=fixed]');if(o)o.textContent=UP.kind==='repo'?'Fixed columns (repo): A no · C branch · D model · E engine · F frame · H color · J encoded date · K days':'Fixed columns: C model · D engine · E frame · F status · G color · I encoded date · J age'}
+    function openUpload(k){UP.kind=k||'repo';UP.headers=[];UP.rows=[];UP.raw=null;$('upLayout').value='auto';$('upKind').value=UP.kind;layoutText();fillTpl();$('upName').value=nextTabName(UP.kind);$('upFile').value='';$('upResult').innerHTML='';$('upDrop').classList.remove('has-file');$('upDropTitle').textContent='Tap here to choose a file';$('upDropSub').textContent='Excel (.xls, .xlsx) or CSV';updUpBtn();openModal('uploadModal')}
+    $('upKind').onchange=()=>{UP.kind=$('upKind').value;layoutText();fillTpl();$('upName').value=nextTabName(UP.kind);if(UP.raw)readUpload();updUpBtn()};$('upName').oninput=updUpBtn;
+    const FIXED={model:2,engine:3,chassis:4,status:5,color:6,encoded:8,age:9},FIXED_REPO={branch:2,model:3,engine:4,chassis:5,status:6,color:7,encoded:9,age:10},LET=i=>String.fromCharCode(65+i),HEADISH=/^(engine|chassis|chasis|frame|model|status|colou?r|encoded|age|no\.?|branch|company)\b/i;
+    function analyzeUpload(rows,mode,kind){const hi=rows.findIndex(r=>r.some(x=>/engine|chassis|chasis|frame/i.test(x)));
+      if(mode!=='fixed'&&hi>=0){const H=rows[hi].map(x=>x.trim()),L=H.map(x=>x.toLowerCase()),f=re=>L.findIndex(h=>re.test(h)),ce=f(/^engine/),cc=f(/chas|^frame/);if(ce>=0&&cc>=0){const data=rows.slice(hi+1).filter(r=>(r[ce]||'').trim()||(r[cc]||'').trim());return {layout:'auto',headers:H,rows:data.map(r=>H.map((_,i)=>String(r[i]??'').trim())),map:{model:f(/model/),engine:ce,chassis:cc,status:f(/^status/),color:f(/colou?r/),encoded:f(/encoded/),age:f(/^(age|days)/)}}}}
+      const M=kind==='repo'?FIXED_REPO:FIXED,at=(r,i)=>String(r[i]??'').trim();
+      const isHead=r=>HEADISH.test(at(r,M.engine))||HEADISH.test(at(r,M.chassis))||[/^model/i.test(at(r,M.model)),/^status/i.test(at(r,M.status)),/^colou?r/i.test(at(r,M.color)),/^encoded/i.test(at(r,M.encoded)),/^(age|days)/i.test(at(r,M.age))].filter(Boolean).length>=2;
+      const isFoot=r=>r.some(x=>/^(grand total|prepared by)\b/i.test(String(x||'').trim()));
+      const isData=r=>(at(r,M.engine)||at(r,M.chassis))&&!isHead(r)&&!isFoot(r)&&(kind!=='repo'||/^[\d,]+$/.test(at(r,0)));
+      const fd=rows.findIndex(isData);if(fd<0)return null;
+      const n=Math.max(11,...rows.slice(Math.max(0,fd-1)).map(r=>r.length)),hdr=fd>0&&isHead(rows[fd-1])?rows[fd-1]:[],H=Array.from({length:n},(_,i)=>(hdr[i]||'').trim()||'COL '+LET(i));
+      return {layout:'fixed',headers:H,rows:rows.slice(fd).filter(isData).map(r=>H.map((_,i)=>String(r[i]??'').trim())),map:Object.assign({},M)}}
+    function readUpload(){if(!UP.raw)return;const A=analyzeUpload(UP.raw,$('upLayout').value,UP.kind);
+      if(!A||!A.rows.length){UP.rows=[];$('upDrop').classList.remove('has-file');$('upDropTitle').textContent='Tap here to choose a file';$('upResult').innerHTML='<p style="color:#c8433b"><b>No units found in this file.</b> Engine numbers should be in column D and frame numbers in column E (or use header names ENGINE / CHASSIS). Save the file as CSV.</p>';updUpBtn();return}
+      UP.headers=A.headers;UP.rows=A.rows;UP.layout=A.layout;const m=A.map,g=(r,k)=>m[k]>=0?r[m[k]]||'':'';
+      $('upDrop').classList.add('has-file');$('upDropTitle').textContent='✓ '+UP.file;$('upDropSub').textContent=UP.rows.length+' units found. Tap to choose another file.';
+      const seen=new Set();let dupe=0;UP.rows.forEach(r=>{const k=(g(r,'engine')+'|'+g(r,'chassis')).toUpperCase();if(seen.has(k))dupe++;else seen.add(k)});
+      const known=new Set(units.map(u=>(u.engine||'').trim().toUpperCase()).filter(Boolean));let inSheet=0;UP.rows.forEach(r=>{if(known.has(g(r,'engine').trim().toUpperCase()))inSheet++});
+      const REPO=UP.kind==='repo',where=A.layout==='fixed'?(REPO?'by column position — A no., C branch, D model, E engine, F frame, H color, J encoded, K days':'by column position — Model C, Engine D, Frame E, Status F, Color G, Encoded I, Age J'):'by header names';
+      const PV=REPO?[['branch','Branch'],['model','Model'],['engine','Engine'],['chassis','Frame'],['color','Color'],['encoded','Encoded'],['age','Days']]:[['model','Model'],['engine','Engine'],['chassis','Frame'],['status','Status'],['color','Color'],['encoded','Encoded'],['age','Age']];
+      $('upResult').innerHTML=`<p><b>${escapeHtml(UP.file)}</b> • read ${where}</p><table class="up-sample"><tr>${PV.map(p=>`<th>${p[1]}</th>`).join('')}</tr>${UP.rows.slice(0,3).map(r=>`<tr>${PV.map(p=>p[0]).map(k=>`<td>${escapeHtml(g(r,k)||'—')}</td>`).join('')}</tr>`).join('')}</table><div class="rep-kpi"><div><small>Units to add</small><b>${UP.rows.length}</b></div><div><small>Duplicate in file</small><b>${dupe}</b></div><div><small>Also in other tabs</small><b>${inSheet}</b></div><div><small>New tab starts</small><b>Unchecked</b></div></div><small>Check that the first rows above look right before creating the tab.</small>`;updUpBtn()}
+    function loadScript(u){return new Promise((ok,no)=>{const x=document.createElement('script');x.src=u;x.onload=ok;x.onerror=()=>no(new Error('load'));document.head.appendChild(x)})}
+    async function ensureXlsx(){if(window.XLSX)return;try{await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')}catch(e){await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js')}}
+    async function fileToRows(f){if(/\.(xls|xlsx|xlsm)$/i.test(f.name)){await ensureXlsx();const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];return XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:'',blankrows:false}).map(r=>r.map(x=>String(x??'').replace(/\s+/g,' ').trim()))}return parseCsv((await f.text()).replace(/^\ufeff/,''))}
+    $('upFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;UP.file=f.name;$('upDropTitle').textContent='Reading '+f.name+'…';try{UP.raw=await fileToRows(f)}catch(err){UP.raw=null;UP.rows=[];$('upDrop').classList.remove('has-file');$('upDropTitle').textContent='Tap here to choose a file';$('upResult').innerHTML='<p style="color:#c8433b"><b>Could not read this file.</b> '+(/\.(xls|xlsx|xlsm)$/i.test(f.name)?'The Excel reader needs an internet connection. Connect, or save the file as CSV and try again.':'Save it as CSV and try again.')+'</p>';updUpBtn();return}readUpload()};$('upLayout').onchange=readUpload;
+    $('upCreate').onclick=async()=>{const name=$('upName').value.trim(),btn=$('upCreate');btn.disabled=true;const t0=Date.now(),tick=setInterval(()=>{btn.textContent=`Creating tab… ${Math.round((Date.now()-t0)/1000)}s`},500);btn.textContent='Uploading '+UP.rows.length+' units…';try{const payload={action:'createTab',token:SCRIPT_TOKEN,kind:UP.kind,name,headers:UP.headers,rows:UP.rows,layout:UP.layout||'auto',template:$('upTpl').value};const data=SERVER_MODE?await gs('apiCreateTab',payload):await readJson(await fetch(getScriptUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),signal:AbortSignal.timeout(120000)}));if(!data.ok)throw new Error(data.error||'Could not create the tab');hideModal('uploadModal');
+        if(data.units&&data.sheet){const norm=u=>({...u,remarks:u.remarks||'',checker:u.checker||'',inspection:u.inspection||''});units=units.filter(u=>u.sheet!==data.name).concat(data.units.map(norm));sheetsMeta=sheetsMeta.filter(m=>m.name!==data.name).concat([data.sheet]);syncYears();lastSync=Date.now();try{localStorage.setItem('motorlandia_units_cache',JSON.stringify(units))}catch(e){}setTimeout(()=>loadFromSheet(true),2500)}
+        else{for(let i=0;i<5&&!sheetsMeta.some(m=>m.name===data.name);i++){await loadFromSheet(false);if(!sheetsMeta.some(m=>m.name===data.name))await new Promise(r=>setTimeout(r,800))}}
+        sheetFilter=UPG[UP.kind];tabFilter=data.name;renderAll();showToast(`Created tab "${data.name}" with ${data.rows} units${data.template?' (design copied from '+data.template+')':''}.`)}catch(err){showToast('Could not create the tab: '+explainError(err))}finally{clearInterval(tick);btn.textContent='Create tab in Google Sheet';updUpBtn()}};
+    function renderDrawer(){const metas=(sheetsMeta||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));const c=activeChecker||{name:'',initials:''};const it=(a,ic,t,x,cls)=>`<button class="dr-it ${cls||''}" ${a}>${ic} ${t}${x!=null?`<em>${x}</em>`:''}</button>`;
+      $('menuPanel').innerHTML=`<div class="dr-head">${c.name?avatarHTML(c,true):''}<span><b>${escapeHtml(c.name)}</b></span><button class="dr-x" data-dr="close">${ico('close',16)}</button></div>
+      <div class="dr-sec">NAVIGATE</div>${it('data-go="Overview"',icw('overview'),'Overview',null,currentTab==='Overview'?'on':'')}${it('data-go="Checking"',icw('bike'),'Motorcycle checking',null,currentTab==='Checking'?'on':'')}${it('data-go="Inspection Log"',icw('log'),'Inspection Log',units.filter(u=>u.checked&&yearOK(u)&&!u.dup).length,currentTab==='Inspection Log'?'on':'')}
+      <div class="dr-sec">ACTIONS</div>${it('data-act="report"',icw('report'),'Report')}${it('data-act="upload"',icw('upload'),'Upload new year data',null,'')}${it('data-act="refresh"',icw('refresh'),'Refresh now')}${it('data-act="export"',icw('download'),'Export CSV')}
+      <div class="dr-sec">SYSTEM</div>${it('data-act="conn"',icw('settings'),'Connection settings')}${it('data-act="logout"',icw('logout'),'Log out')}`}
+    function closeDrawer(){$('menuPanel').classList.add('hidden');$('menuBtn').setAttribute('aria-expanded','false');const sc=$('menuScrim');if(sc)sc.remove()}
+    $('menuBtn').addEventListener('click',()=>{if($('menuPanel').classList.contains('hidden')){const sc=$('menuScrim');if(sc)sc.remove();return}renderDrawer();const sc=document.createElement('div');sc.id='menuScrim';sc.onclick=closeDrawer;document.body.appendChild(sc)});
+    $('menuPanel').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;e.stopPropagation();if(b.dataset.dr==='close'){closeDrawer();return}if(b.dataset.go){showTab(b.dataset.go);closeDrawer();return}if(b.dataset.sheetGo){sheetFilter=b.dataset.sheetGo;showTab('Checking');renderAll();closeDrawer();return}const a=b.dataset.act;closeDrawer();if(a==='report')openReport();else if(a==='upload')openUpload('repo');else if(a==='refresh')loadFromSheet(false);else if(a==='export')dl(`motorlandia_${repoYear}.csv`,csvOf(scoped()));else if(a==='conn')openSettings();else if(a==='logout')logout()});
+    $('subTabStrip').addEventListener('click',e=>{const ad=e.target.closest('[data-add]');if(ad){openUpload(ad.dataset.add);return}const b=e.target.closest('[data-tab]');if(b){tabFilter=b.dataset.tab;renderAll()}});
+
+    /* ---------- v29: top search, compact / details view ---------- */
+    async function pollRev(){
+      if(!activeChecker||document.hidden||syncing)return;
+      const url=getScriptUrl();if(!url&&!SERVER_MODE)return;
+      const busy=!$('inspectionModal').classList.contains('hidden');
+      if(SERVER_MODE||!revOK||needFull){if(!busy&&Date.now()-lastFull>(needFull?3000:15000))loadFromSheet(true);return}
+      try{
+        const r=await readJson(await fetch(`${url}${url.includes('?')?'&':'?'}action=rev&token=${encodeURIComponent(SCRIPT_TOKEN)}&t=${Date.now()}`,{signal:AbortSignal.timeout(10000)}));
+        if(r.rev===undefined){revOK=false;return}
+        if(!r.ok)throw new Error(r.error||'rev');
+        failCount=0;
+        if(String(r.rev)!==lastRev||Date.now()-lastFull>60000){if(!busy)loadFromSheet(true)}
+        else{lastSync=Date.now();if(!liveMode){liveMode=true;setConn('Live: Google Sheets',true,'Synced with Google Sheets')}}
+      }catch(e){failCount++;if(failCount>=3){liveMode=false;setConn('Sync problem, retrying',false,'Could not check Google Sheets • showing last loaded data')}}
+    }
+    function listFor(w){if(w==='o')return filteredUnits($('searchOverview').value,$('filterOverview').value);let l=filteredUnits($('searchTable').value,$('filterTable').value,$('brandTable').value);if(currentTab==='Inspection Log')l=l.filter(u=>u.checked);return l}
+    function cmpRow(u){const bad=u.checked&&isIssue(u);return `<div class="cmp-row click-row${changed.has(u.id)?' flash':''}${u.checked?(bad?' row-bad':' row-ok'):''}" data-unit-id="${escapeHtml(u.id)}" title="${!u.checked?'Pending':bad?'Incomplete':'Complete'}"><span class="cmp-brand">${escapeHtml(u.brand||'—')}</span><b class="cmp-model">${escapeHtml(u.model||'—')}</b><span class="cmp-brk"></span><span class="cmp-f"><i>Engine</i>${escapeHtml(u.engine||'—')}</span><span class="cmp-f"><i>Frame</i>${escapeHtml(u.chassis||'—')}</span><span class="cmp-f"><i>Color</i>${escapeHtml(u.color||'—')}</span><span class="cmp-state">${u.checked?ico(bad?'alert':'check',18):''}</span></div>`}
+    function fillCmp(id,moreId,list){const head='<div class="cmp-head"><span>Unit</span><span>Model</span><span>Engine no.</span><span>Frame no.</span><span>Color</span><span></span></div>';$(id).innerHTML=list.length?head+list.slice(0,pageSize).map(cmpRow).join(''):'<div class="empty-state">No matching inventory records found.</div>';const m=$(moreId);m.classList.toggle('hidden',list.length<=pageSize);m.textContent=`Show more (${Math.max(0,list.length-pageSize)} left)`}
+    function renderCompact(){if(viewMode!=='compact')return;fillCmp('cmpOverview','moreOverview',listFor('o'));fillCmp('cmpTable','moreTable',listFor('t'))}
+    const _renderTables=renderTables;
+    renderTables=function(){const key=[tabFilter,currentTab,$('searchOverview').value,$('filterOverview').value,$('searchTable').value,$('filterTable').value,$('brandTable').value].join('|');if(key!==lastKey){pageSize=100;lastKey=key}document.body.classList.toggle('view-compact',viewMode==='compact');_renderTables();renderCompact();['moreOverview','moreTable'].forEach(id=>{if(viewMode!=='compact'){const l=listFor(id==='moreOverview'?'o':'t');$(id).classList.toggle('hidden',l.length<=pageSize);$(id).textContent=`Show more (${Math.max(0,l.length-pageSize)} left)`}})};
+    function updView(){document.body.classList.toggle('view-compact',viewMode==='compact');document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('on',b.dataset.view===viewMode))}
+    $('topSearch').addEventListener('input',()=>{const v=$('topSearch').value;$('searchOverview').value=v;$('searchTable').value=v;$('topClear').classList.toggle('hidden',!v);renderTables()});
+    $('topClear').onclick=()=>{$('topSearch').value='';$('topSearch').dispatchEvent(new Event('input'));$('topSearch').focus()};
+    $('topFilter').addEventListener('change',()=>{$('filterOverview').value=$('topFilter').value;$('filterTable').value=$('topFilter').value;renderTables()});
+    document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{viewMode=b.dataset.view;try{localStorage.setItem('motorlandia_view',viewMode)}catch(e){}updView();renderTables()});
+    $('moreOverview').onclick=$('moreTable').onclick=()=>{pageSize+=100;renderTables()};
+    $('resetFilters').addEventListener('click',()=>{setTimeout(()=>{$('topSearch').value=$('searchTable').value;$('topFilter').value=$('filterTable').value;$('topClear').classList.toggle('hidden',!$('topSearch').value);$('searchOverview').value=$('searchTable').value;$('filterOverview').value=$('filterTable').value;renderTables()},0)});
+    updView();
+    $('selGroup').onchange=e=>setSheet(e.target.value);$('selTab').onchange=e=>{tabFilter=e.target.value;renderAll()};$('selAdd').onclick=()=>openUpload($('selAdd').dataset.add);
+    $('retryBtn').addEventListener('click',()=>loadFromSheet(false));
+
+    /* ---------- v38: configurable groups, preferences, hooks, backups ---------- */
+    groupOf=function(n){n=String(n||'');for(const g of CONFIG.groups){try{if(new RegExp(g.match,'i').test(n))return g.name}catch(e){}}return CONFIG.fallbackGroup};
+    GROUPS.length=0;[...CONFIG.groups.map(g=>g.name),CONFIG.fallbackGroup].forEach(g=>{if(!GROUPS.includes(g))GROUPS.push(g)});
+    const _loadFromSheet=loadFromSheet;loadFromSheet=async function(){const ok=await _loadFromSheet.apply(this,arguments);if(ok)Motorlandia.emit('sync',units);return ok};
+    const _renderAll=renderAll;renderAll=function(){_renderAll.apply(this,arguments);Motorlandia.emit('render')};
+    const _saveInspection=saveInspection;saveInspection=async function(){const id=selectedUnitId;await _saveInspection.apply(this,arguments);Motorlandia.emit('save',units.find(x=>String(x.id)===String(id)))};
+    const _renderDrawer=renderDrawer;renderDrawer=function(){_renderDrawer.apply(this,arguments);const p=$('menuPanel'),sec=[...p.querySelectorAll('.dr-sec')].pop();if(!sec)return;const mk=(a,t)=>`<button class="dr-it" data-act="${a}"><span class="dr-ic" style="color:#285db8;background:#eaf1ff">${ico('settings',18)}</span><span>${t}</span></button>`;sec.insertAdjacentHTML('beforebegin','<div class="dr-sec">TOOLS</div>'+mk('prefs','Preferences &amp; team')+mk('backup','Export all units (CSV)')+Motorlandia.actions().map((a,i)=>mk('x'+i,escapeHtml(a.label))).join(''))};
+    $('menuPanel').addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;if(a==='prefs'||a==='backup'||/^x\d+$/.test(a)){e.stopPropagation();closeDrawer();if(a==='prefs')openPrefs();else if(a==='backup')dl('motorlandia_all_units_'+new Date().toISOString().slice(0,10)+'.csv',csvOf(units));else Motorlandia.actions()[+a.slice(1)].fn()}},true);
+    const PK='motorlandia_prefs_v1',stamp=()=>new Date().toISOString().slice(0,10);
+    const getP=()=>{try{return JSON.parse(localStorage.getItem(PK)||'{}')}catch(e){return {}}};
+    function teamRows(list){$('pfTeam').innerHTML=list.map((c,i)=>`<div class="pf-row" style="display:flex;gap:6px;margin-bottom:6px"><input class="settings-input" data-pf="name" value="${escapeHtml(c.name)}" placeholder="Name" style="flex:1"><input type="color" data-pf="color" value="${escapeHtml(c.color||'#285db8')}" style="width:44px;height:40px;border:1px solid #cfd9e8;border-radius:8px;padding:2px"><button class="outline-button" type="button" data-pfdel="${i}" aria-label="Remove">✕</button></div>`).join('')}
+    const readTeam=()=>[...document.querySelectorAll('#pfTeam .pf-row')].map(r=>({name:r.querySelector('[data-pf=name]').value.trim().toUpperCase(),color:r.querySelector('[data-pf=color]').value,role:'Inventory Checker'})).filter(c=>c.name);
+    function openPrefs(){$('pfVer').textContent=CONFIG.version;teamRows(checkers.map(c=>({name:c.name,color:c.color})));$('pfPage').value=CONFIG.pageSize;$('pfPoll').value=Math.round(CONFIG.pollMs/1000);$('pfFull').value=Math.round(CONFIG.fullSyncMs/1000);openModal('prefsModal')}
+    $('pfAdd').onclick=()=>{const t=readTeam();t.push({name:'',color:'#285db8'});teamRows(t)};
+    $('pfTeam').addEventListener('click',e=>{const d=e.target.closest('[data-pfdel]');if(d){const t=readTeam();teamRows(t.filter((_,i)=>i!==+d.dataset.pfdel))}});
+    $('pfSave').onclick=()=>{const t=readTeam();if(!t.length){showToast('Keep at least one checker.');return}const p=getP();p.checkers=t;p.pageSize=Math.max(20,+$('pfPage').value||100);p.pollMs=Math.max(2,+$('pfPoll').value||5)*1000;p.fullSyncMs=Math.max(15,+$('pfFull').value||60)*1000;localStorage.setItem(PK,JSON.stringify(p));location.reload()};
+    $('pfReset').onclick=()=>{if(confirm('Reset team and behaviour settings to the defaults in the file?')){localStorage.removeItem(PK);location.reload()}};
+    $('pfClear').onclick=()=>{try{localStorage.removeItem('motorlandia_units_cache')}catch(e){}showToast('Local cache cleared. It reloads from Google Sheets on the next sync.')};
+    const dlBlob=(n,t,m)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:m}));a.download=n;a.click()};
+    $('pfExpCsv').onclick=()=>dl('motorlandia_units_'+stamp()+'.csv',csvOf(units));
+    $('pfExpJson').onclick=()=>dlBlob('motorlandia_units_'+stamp()+'.json',JSON.stringify({exported:new Date().toISOString(),version:CONFIG.version,units},null,1),'application/json');
+    $('pfExpCfg').onclick=()=>dlBlob('motorlandia_settings_'+stamp()+'.json',JSON.stringify(Object.assign({checkers:checkers.map(c=>({name:c.name,color:c.color,role:c.role})),pageSize:CONFIG.pageSize,pollMs:CONFIG.pollMs,fullSyncMs:CONFIG.fullSyncMs},getP()),null,1),'application/json');
+    $('pfImpCfg').onclick=()=>$('pfFile').click();
+    $('pfFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(typeof o!=='object'||!o)throw 0;const ok={};['checkers','pageSize','pollMs','fullSyncMs','groups','fallbackGroup','scriptUrl'].forEach(k=>{if(o[k]!==undefined)ok[k]=o[k]});localStorage.setItem(PK,JSON.stringify(ok));location.reload()}catch(x){showToast('That file is not a valid settings export.')}};
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')hideModal('prefsModal')});
+    $('prefsModal').addEventListener('click',e=>{if(e.target===$('prefsModal'))hideModal('prefsModal')});
+    renderCheckerCards();Motorlandia.emit('ready');
+
+    /* ---------- v39: AI plate scan (photo -> engine/chassis -> 1-tap check) ---------- */
+    (function(){
+      const css=document.createElement('style');
+      css.textContent='#scanFab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:40;display:flex;align-items:center;gap:8px;border:0;border-radius:30px;background:#285db8;color:#fff;font-weight:700;font-size:15px;padding:14px 20px;box-shadow:0 8px 24px #285db855}#scanFab[disabled]{opacity:.7}#scanFab:active{transform:scale(.97)}';
+      document.head.appendChild(css);
+      const fab=document.createElement('button');fab.id='scanFab';fab.type='button';fab.innerHTML='📷 <span>Scan</span>';
+      const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.setAttribute('capture','environment');inp.className='hidden';
+      $('appShell').append(fab,inp);
+      fab.onclick=()=>{try{const u=getScriptUrl();if(u)fetch(u+(u.includes('?')?'&':'?')+'action=ping',{mode:'no-cors'}).catch(()=>{})}catch(e){}inp.click()}; /* warms up the server while the camera is open */
+      const norm=v=>String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/[OQ]/g,'0').replace(/[IL]/g,'1').replace(/S/g,'5').replace(/B/g,'8');
+      function shrink(file,max=1000){return new Promise((ok,no)=>{const img=new Image(),u=URL.createObjectURL(file);img.onload=()=>{
+          const k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas'),w=c.width=Math.round(img.width*k),hh=c.height=Math.round(img.height*k),x=c.getContext('2d');
+          x.drawImage(img,0,0,w,hh);URL.revokeObjectURL(u);
+          try{ /* grayscale + auto-contrast: smaller upload and clearer stamped digits for OCR */
+            const d=x.getImageData(0,0,w,hh),a=d.data,hist=new Uint32Array(256);
+            for(let i=0;i<a.length;i+=4){const g=(a[i]*77+a[i+1]*151+a[i+2]*28)>>8;a[i]=g;hist[g]++}
+            const n=w*hh;let lo=0,hi=255,s=0;
+            for(let v=0;v<256;v++){s+=hist[v];if(s>n*.02){lo=v;break}}
+            s=0;for(let v=255;v>=0;v--){s+=hist[v];if(s>n*.02){hi=v;break}}
+            const sc=hi>lo+20?255/(hi-lo):1;
+            for(let i=0;i<a.length;i+=4){const g=Math.max(0,Math.min(255,(a[i]-lo)*sc));a[i]=a[i+1]=a[i+2]=g}
+            x.putImageData(d,0,0);
+          }catch(e){}
+          ok(c.toDataURL('image/jpeg',.7).split(',')[1])};
+          img.onerror=()=>no(new Error('Cannot read this image.'));img.src=u})}
+      function findByText(text){
+        const t=norm(text);if(t.length<6)return {hits:[],how:''};
+        const has=(u,fn)=>[u.engine,u.chassis].some(v=>{const n=norm(v);return fn(n)});
+        let hits=units.filter(u=>has(u,n=>n.length>=6&&t.includes(n)));
+        if(hits.length)return {hits,how:'exact'};
+        return {hits:units.filter(u=>has(u,n=>n.length>=8&&t.includes(n.slice(-6)))),how:'partial'};
+      }
+      function findUnit(r){
+        const e=norm(r.engine),c=norm(r.chassis);if(!e&&!c)return {hits:[],how:''};
+        let hits=units.filter(u=>(e&&norm(u.engine)===e)||(c&&norm(u.chassis)===c));
+        if(hits.length)return {hits,how:'exact'};
+        const tail=x=>x.length>=6?x.slice(-6):'';
+        hits=units.filter(u=>[[e,u.engine],[e,u.chassis],[c,u.engine],[c,u.chassis]].some(([a,b])=>tail(a)&&norm(b).endsWith(tail(a))));
+        return {hits,how:'partial'};
+      }
+      inp.onchange=async()=>{
+        const f=inp.files[0];inp.value='';if(!f)return;
+        if(!getScriptUrl()||!liveMode&&!SERVER_MODE){showToast('Connect to Google Sheets first (Connection settings).');return}
+        fab.disabled=true;fab.lastElementChild.textContent='Reading…';
+        try{
+          const image=await shrink(f);
+          const payload={action:'readPlate',token:SCRIPT_TOKEN,image,mime:'image/jpeg'};
+          const url=getScriptUrl();
+          const data=SERVER_MODE?await gs('apiReadPlate',payload):await readJson(await fetchL(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}));
+          if(!data.ok)throw new Error(data.error||'Could not read the plate.');
+          const textMode=!data.engine&&!data.chassis&&typeof data.text==='string';
+          let read=textMode?String(data.text).replace(/\s+/g,' ').trim().slice(0,50):[data.engine&&'Engine '+data.engine,data.chassis&&'Frame '+data.chassis].filter(Boolean).join(' • ');
+          if(!read){showToast('No text found in the photo. Retake it closer, straight on, with less glare.');return}
+          let {hits,how}=textMode?findByText(data.text):findUnit(data);
+          const nd=hits.filter(u=>!u.dup);if(nd.length)hits=nd;
+          if(textMode&&hits.length===1)read=(hits[0].engine||hits[0].chassis);
+          Motorlandia.emit('scan',{read:data,hits});
+          if(hits.length===1){
+            openInspection(hits[0].id);
+            const m=$('matchedOption');if(m)m.click();
+            showToast(`Read: ${read}${how==='partial'?' (partial match, please verify)':''}. Press Save inspection to check it.`);
+          }else if(hits.length>1){
+            const q=textMode?String(hits[0].engine||hits[0].chassis).replace(/[^A-Za-z0-9]/g,'').slice(-5):(norm(data.engine)||norm(data.chassis)).slice(-5);$('topSearch').value=q;$('topSearch').dispatchEvent(new Event('input'));
+            if(currentTab==='Overview')showTab('Checking');
+            showToast(`Read: ${read}. ${hits.length} possible units, pick the right one from the list.`);
+          }else{
+            showToast(textMode?'The photo was read, but no unit number in your list matches. Retake it closer, or search by the last 5 digits.':`Read: ${read}, but no unit in the list matches. Check the photo or add the unit.`);
+          }
+        }catch(err){showToast('Scan failed: '+explainError(err))}
+        finally{fab.disabled=false;fab.lastElementChild.textContent='Scan'}
+      };
+    })();
+
+    /* ---------- v42: bottom-sheet pickers for Group / Tab (mobile) ---------- */
+    (function(){
+      const css=document.createElement('style');
+      css.textContent=`
+      #selGroup,#selTab{display:none!important}
+      .pk-trg{display:flex;align-items:center;gap:8px;min-width:0;border:1px solid #cfd9e8;border-radius:12px;background:#fff;color:#1c2940;font:inherit;padding:8px 10px;text-align:left;cursor:pointer;box-shadow:0 1px 2px #1c294010}
+      .pk-trg:active{background:#f3f7fd}#pkGroup{flex:0 0 36%}#pkTab{flex:1}
+      .pk-trg .t{flex:1;min-width:0}.pk-trg b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .pk-trg small{display:block;font-size:11px;font-weight:600;color:#6b7a93;margin-top:1px}
+      .pk-trg .pk-chev{color:#6b7a93;font-size:14px;flex:none}
+      .pk-bar{height:5px;border-radius:5px;background:#e6ecf5;overflow:hidden;margin-top:6px}.pk-bar i{display:block;height:100%;background:#285db8;border-radius:5px;transition:width .3s}.pk-bar.done i{background:#2c9d5b}
+      .pk-ov{position:fixed;inset:0;background:rgba(15,25,45,.5);z-index:90;display:none;align-items:flex-end;justify-content:center}.pk-ov.open{display:flex}
+      .pk-panel{width:100%;max-width:520px;max-height:80vh;background:#fff;border-radius:22px 22px 0 0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px);animation:pkUp .2s ease-out;box-shadow:0 -10px 40px #0f192d33}
+      @keyframes pkUp{from{transform:translateY(60px);opacity:.5}to{transform:none;opacity:1}}
+      .pk-grab{width:42px;height:5px;border-radius:5px;background:#d3dbe8;margin:9px auto 2px}
+      .pk-head{display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px}.pk-head h4{margin:0;font-size:16px;color:#1c2940}.pk-head button{border:0;background:#eef2f8;border-radius:50%;width:32px;height:32px;font-size:15px;color:#5d6c85}
+      .pk-search{margin:0 16px 8px;border:1px solid #d6dfec;border-radius:12px;padding:10px 12px;font:inherit;font-size:14px;background:#f7f9fc}
+      .pk-list{overflow-y:auto;padding:4px 12px 14px;display:flex;flex-direction:column;gap:8px}
+      .pk-row{display:flex;align-items:center;gap:12px;width:100%;border:1.5px solid #e3e9f3;border-radius:14px;background:#fff;padding:12px 14px;text-align:left;font:inherit;color:#1c2940;cursor:pointer}
+      .pk-row:active{background:#f3f7fd}.pk-row.active{border-color:#285db8;background:#eef4ff}
+      .pk-row .pk-main{flex:1;min-width:0}.pk-row b{display:block;font-size:14.5px}.pk-row .pk-sub{display:block;font-size:12px;color:#6b7a93;margin-top:2px}
+      .pk-row.dim{opacity:.62}.pk-row.dim .pk-bar{display:none}
+      .pk-chip{flex:none;font-size:12px;font-weight:800;border-radius:20px;padding:4px 10px;background:#eef2f8;color:#4a5a75}
+      .pk-chip.done{background:#e1f5e9;color:#1d8147}.pk-chip.warn{background:#fff1d6;color:#9a6200}.pk-chip.sel{background:#285db8;color:#fff}
+      .pk-empty{padding:22px;text-align:center;color:#8a97ac;font-size:13px}`;
+      document.head.appendChild(css);
+      const ov=document.createElement('div');ov.className='pk-ov';ov.innerHTML='<div class="pk-panel" role="dialog" aria-modal="true"><div class="pk-grab"></div><div class="pk-head"><h4 id="pkTitle"></h4><button type="button" id="pkClose" aria-label="Close">✕</button></div><input id="pkSearch" class="pk-search" placeholder="Search tab…" autocomplete="off"><div id="pkList" class="pk-list"></div></div>';
+      document.body.appendChild(ov);
+      let cur=null;
+      const close=()=>{ov.classList.remove('open');cur=null};
+      const pct=(c,t)=>t?Math.round(c/t*100):0;
+      function paint(){
+        if(!cur)return;const q=$('pkSearch').value.trim().toLowerCase();
+        const rows=cur.rows.filter(r=>!q||r.label.toLowerCase().includes(q));
+        $('pkList').innerHTML=rows.length?rows.map(r=>{
+          const done=r.total>0&&r.checked===r.total;
+          const chip=r.dim?'<span class="pk-chip warn">⚠ Not readable</span>':done?'<span class="pk-chip done">✓ Done</span>':'<span class="pk-chip'+(r.active?' sel':'')+'">'+pct(r.checked,r.total)+'%</span>';
+          return `<button type="button" class="pk-row${r.active?' active':''}${r.dim?' dim':''}" data-v="${escapeHtml(r.value)}"><div class="pk-main"><b>${escapeHtml(r.label)}</b><span class="pk-sub">${r.dim?'No Engine/Chassis headers found':escapeHtml(r.sub)}</span><div class="pk-bar${done?' done':''}"><i style="width:${pct(r.checked,r.total)}%"></i></div></div>${chip}</button>`}).join(''):'<div class="pk-empty">No match.</div>';
+      }
+      function open(title,rows,onPick){cur={rows,onPick};$('pkTitle').textContent=title;const s=$('pkSearch');s.style.display=rows.length>6?'':'none';s.value='';paint();ov.classList.add('open');if(rows.length>6)setTimeout(()=>s.focus({preventScroll:true}),150)}
+      $('pkSearch').addEventListener('input',paint);
+      $('pkClose').onclick=close;ov.addEventListener('click',e=>{if(e.target===ov)close()});
+      document.addEventListener('keydown',e=>{if(e.key==='Escape'&&cur)close()});
+      $('pkList').addEventListener('click',e=>{const b=e.target.closest('.pk-row');if(!b||!cur)return;const f=cur.onPick;close();f(b.dataset.v)});
+      const host=$('tabSelects');
+      const gBtn=document.createElement('button'),tBtn=document.createElement('button');
+      gBtn.id='pkGroup';tBtn.id='pkTab';[gBtn,tBtn].forEach(b=>{b.type='button';b.className='pk-trg'});
+      host.insertBefore(gBtn,$('selTab'));host.insertBefore(tBtn,$('selAdd'));
+      let data={g:[],t:[]};
+      function build(){
+        const LABEL={'Motor Brands':'Brands'};
+        const metas=yearMetas(),pool=units.filter(u=>locFilter==='All Locations'||u.location===locFilter);
+        const stat=names=>{const p=pool.filter(u=>names.includes(u.sheet));return {total:p.length,checked:p.filter(u=>u.checked).length}};
+        data.g=presentGroups().map(g=>{const ts=metas.filter(m=>groupOf(m.name)===g),s=stat(ts.map(m=>m.name));return {value:g,label:LABEL[g]||g,sub:`${ts.length} tab${ts.length===1?'':'s'} · ${s.checked}/${s.total} checked`,checked:s.checked,total:s.total,dim:ts.every(m=>m.unreadable),active:g===sheetFilter}});
+        data.t=metas.filter(m=>groupOf(m.name)===sheetFilter).map(m=>{const s=stat([m.name]);return {value:m.name,label:m.name,sub:`${s.checked} of ${s.total} checked`,checked:s.checked,total:s.total,dim:!!m.unreadable,active:m.name===tabFilter}});
+        const g=data.g.find(x=>x.active)||{label:'Group',sub:'',checked:0,total:0};
+        gBtn.innerHTML=`<div class="t"><b>${escapeHtml(g.label)}</b><small>${data.g.length} groups</small></div><span class="pk-chev">⌄</span>`;
+        const t=data.t.find(x=>x.active)||data.t[0]||{label:'No tabs',sub:'',checked:0,total:0};
+        const done=t.total>0&&t.checked===t.total;
+        tBtn.innerHTML=`<div class="t"><b>${escapeHtml(t.label)}</b><small>${t.dim?'Not readable':t.checked+' / '+t.total+' checked · '+pct(t.checked,t.total)+'%'}</small>${t.dim?'':`<div class="pk-bar${done?' done':''}"><i style="width:${pct(t.checked,t.total)}%"></i></div>`}</div><span class="pk-chev">⌄</span>`;
+      }
+      gBtn.onclick=()=>open('Choose group',data.g,v=>setSheet(v));
+      tBtn.onclick=()=>open('Choose tab',data.t,v=>{tabFilter=v;renderAll()});
+      const _rsc=renderSheetChips;renderSheetChips=function(){_rsc.apply(this,arguments);try{build()}catch(e){console.error(e)}};
+      try{build()}catch(e){}
+    })();
+
+</script>
+</body>
+</html>
