@@ -301,6 +301,8 @@ html[data-layout="desktop"] #panel .pf{justify-content:flex-start}
   <button class="m homeonly" id="upBtn2">Upload file</button>
   <button class="m homeonly" id="upRefBtn2">Upload previous locations/remarks</button>
   <button class="m homeonly" id="refClr">Clear previous locations/remarks</button>
+  <button class="m" id="bkExp">Export backup (all files + audits)</button>
+  <button class="m" id="bkImp">Import backup</button>
   <button class="m setonly" id="upBtn3">Delete this file</button>
   <button class="m setonly" id="copyBtn">Copy results (CSV)</button>
   <button class="m" id="urlBtn">Connect to Apps Script (URL)</button>
@@ -344,6 +346,7 @@ html[data-layout="desktop"] #panel .pf{justify-content:flex-start}
 </main>
 <input type="file" id="upFile" accept=".csv,.xlsx,.xls" multiple hidden>
 <input type="file" id="upRef" accept=".csv,.xlsx,.xls" hidden>
+<input type="file" id="bkFile" accept=".json,application/json" hidden>
 <div id="pScrim" onclick="closePanel()"></div>
 <aside id="panel" role="dialog" aria-modal="true" aria-label="Unit details"></aside>
 <div id="upModal" hidden role="dialog" aria-modal="true" aria-label="Connect to Apps Script"><div class="mbox"><h2>Connect to Google Apps Script</h2><p>Paste your web app URL (the one ending in /exec), then press Sync. The URL is saved and all your files are sent to your Google Sheet.</p><input class="pi" id="urlIn" type="url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" spellcheck="false"><div id="upInfo" role="status"></div><div class="mact"><button class="cl" id="urlTest" type="button">Test</button><button class="cl" id="urlClr" type="button">Remove</button><button class="cl" id="urlCancel" type="button">Cancel</button><button class="sv" id="urlSave" type="button">Sync</button></div></div></div>
@@ -795,6 +798,42 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("upModal
   window.addEventListener("storage",function(e){if(e.key===L.KEY){var v=e.newValue;if(v==="auto"||v==="mobile"||v==="desktop"){swap(function(){L.mode=v;L.refresh()})}}});
   L.refresh();ui();
 })();
+
+/* ---- Backup: export / import all files + saved audits (move data between devices) ---- */
+$("bkExp").onclick=function(){
+  drawer(false);saveAll();
+  if(!DS.length){toast("Nothing to export yet.",2500);return}
+  var o={app:"inv-audit-backup",v:1,at:new Date().toISOString(),sets:DS,ref:REF};
+  var bl=new Blob([JSON.stringify(o)],{type:"application/json"}),a=document.createElement("a");
+  a.href=URL.createObjectURL(bl);a.download="inventory-backup-"+new Date().toISOString().slice(0,10)+".json";
+  document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1500);
+  toast("Backup downloaded: "+DS.length+" file"+(DS.length>1?"s":""),3500);
+};
+$("bkImp").onclick=function(){drawer(false);$("bkFile").value="";$("bkFile").click()};
+$("bkFile").onchange=function(){
+  var f=this.files[0];if(!f)return;var rd=new FileReader();
+  rd.onerror=function(){toast("Could not read this file.",5000)};
+  rd.onload=function(){
+    try{
+      var o=JSON.parse(String(rd.result));
+      if(!o||o.app!=="inv-audit-backup"||!Array.isArray(o.sets))throw new Error("This is not a backup file from this dashboard.");
+      closePanel();saveAll();
+      var add=0,rep=0,skip=0;
+      o.sets.forEach(function(x){
+        if(!x||!x.name||!Array.isArray(x.data))return;
+        var ex=DS.filter(function(d){return d.name.toLowerCase()===String(x.name).toLowerCase()})[0];
+        if(ex){
+          if(!confirm('"'+x.name+'" is already on this device. Replace it with the backup (including its saved audits)?')){skip++;return}
+          ex.data=x.data;ex.saved=x.saved||{};rep++;
+        }else{DS.push({id:"s"+Date.now()+"_"+Math.floor(Math.random()*1e6),name:x.name,data:x.data,saved:x.saved||{}});add++}
+      });
+      if(o.ref&&o.ref.map&&!REF.count){REF=o.ref;saveRef()}
+      curSet=null;DATA=[];saved={};draft={};saveAll();goHome();
+      toast("Imported: "+add+" added, "+rep+" replaced"+(skip?", "+skip+" skipped":""),5000);
+    }catch(err){toast(err.message||"Import failed.",6000)}
+  };
+  rd.readAsText(f);
+};
 urlLbl();
 goHome();
 </script>
