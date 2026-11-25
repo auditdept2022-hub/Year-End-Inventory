@@ -1,0 +1,31 @@
+{
+  "name": "Year-End Inventory Audit",
+  "short_name": "Inventory Audit",
+  "description": "Year-end inventory checking dashboard",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#16202c",
+  "theme_color": "#16202c",
+  "icons": [
+    {
+      "src": "logo/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
