@@ -659,15 +659,24 @@ function openSet(id){
   fillFileSel();$("home").hidden=true;$("dash").hidden=false;$("backBtn").hidden=false;$("subT").textContent=x.name;setOnly(true);render();window.scrollTo(0,0);pullAll();
 }
 function delSet(id){
-  var x=DS.filter(function(a){return a.id===id})[0];if(!x||!confirm('Delete "'+x.name+'" and its saved audits?'))return;
-  var was=curSet&&curSet.id===id;DS=DS.filter(function(a){return a.id!==id});if(SURL)srvPush({action:"inv_delFile",name:x.name}).catch(function(e){toast("Deleted on this device, but the Google Sheet was not updated: "+e.message,6000)});
-  if(was){curSet=null;DATA=[];saved={};draft={};goHome()}else{saveAll();renderHome()}
+  var x=DS.filter(function(a){return a.id===id})[0];if(!x||!confirm('Delete "'+x.name+'" and its saved audits?\nThis also clears its data rows in the Google Sheet (a tab\'s headers stay).'))return;
+  function done(msg){
+    var was=curSet&&curSet.id===id;DS=DS.filter(function(a){return a.id!==id});
+    if(was){curSet=null;DATA=[];saved={};draft={};goHome()}else{saveAll();renderHome()}
+    toast(msg,6000);
+  }
+  if(!SURL){done("Deleted on this device only (no Apps Script URL).");return}
+  toast("Deleting\u2026 clearing the Google Sheet",15000);
+  srvPush({action:"inv_delFile",name:x.name}).then(function(r){
+    lastV=null;var sh=r.sheet||{};
+    done('Deleted "'+x.name+'". '+(sh.tab?'Sheet "'+sh.tab+'": '+(sh.cleared||0)+" rows cleared"+(sh.note&&sh.note!=="cleared"?" ("+sh.note+")":"")+".":"No worksheet changed ("+(sh.note||"no match")+")."));
+  },function(e){toast("NOT deleted: the Google Sheet was not updated ("+e.message+"). The file is kept; try again.",9000)});
 }
 $("home").addEventListener("click",function(e){var d=e.target.closest("[data-del]");if(d){delSet(d.dataset.del);return}var c=e.target.closest(".fc");if(c)openSet(c.dataset.id)});
 $("home").addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.classList.contains("fc"))openSet(e.target.dataset.id)});
 
 /* ---- Google Apps Script connection ---- */
-var BUILD="sync-2026-11-26a",UKEY="invAuditUrl2026v2",SURL="";
+var BUILD="sync-2026-11-26b",UKEY="invAuditUrl2026v2",SURL="";
 /* PASTE YOUR APPS SCRIPT /exec URL BETWEEN THE QUOTES. Every device uses THIS url (a per-device saved URL is only used if you set it by hand). */
 var DEFAULT_URL="https://script.google.com/macros/s/AKfycbxMG_WXYLD_HVVhM4Ul7NROmFR5jw8JZIAr8eWY9tYvlLcFzXA8Xpg-NCju_f_ad5ci/exec";
 SURL=DEFAULT_URL;
@@ -878,7 +887,7 @@ function pullAll(manual){
     });
     DS.slice().forEach(function(x){
       if(srvNames[x.name.toLowerCase()])return;
-      if(x.srv&&del[x.name]){                                    /* deleted on another device (server holds a delete record) */
+      if(x.srv&&(del[x.name]||!(o.errors&&o.errors.length))){    /* deleted on another device: never resurrect it (only keep if the server reported read errors) */
         DS=DS.filter(function(d){return d!==x});changed=true;
         if(x===curSet){curSet=null;DATA=[];saved={};draft={};closePanel();$("home").hidden=false;$("dash").hidden=true;$("backBtn").hidden=true;$("subT").textContent="Select an inventory file";setOnly(false)}
       }else{                                                     /* new here, or missing from the server without a delete record: upload it, never drop it */
