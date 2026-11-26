@@ -628,7 +628,7 @@ $("upFile").onchange=function(){
         var data=[],ids={},max=0;
         rows.forEach(function(u){if(u.no>max)max=u.no});
         rows.forEach(function(u){var id=u.no;if(!id||ids[id])id=++max;ids[id]=1;data.push([id,u.model,u.engine,u.chassis,u.color,u.loc,u.days,u.extra||{}])});
-        if(ex){ex.data=data;ex.saved={};ex.clr=1}else DS.push({id:"s"+Date.now()+"_"+Math.floor(Math.random()*1e6),name:nm,data:data,saved:{},clr:1});
+        if(ex){ex.data=data;ex.saved={};ex.clr=1;ex.rep=1}else DS.push({id:"s"+Date.now()+"_"+Math.floor(Math.random()*1e6),name:nm,data:data,saved:{},clr:1,rep:1});
         if(SIG.f){delete SIG.f[nm];sigSave()}added++;units+=data.length;
       }).catch(function(e){errs.push(e.message)});
     });
@@ -637,7 +637,8 @@ $("upFile").onchange=function(){
     var msg=added?added+" file"+(added>1?"s":"")+" added ("+units.toLocaleString()+" units)":"";
     if(errs.length)msg+=(msg?". ":"")+errs.join(" ");
     toast((msg||"No files were added.")+(added?" \u2013 saving to Google Sheet\u2026":""),errs.length?6000:4000);
-    if(added)pullAll().then(function(r){toast(r.ok?(msg+". Saved to the Google Sheet and verified \u2713 Updating the worksheets\u2026"):(msg+". NOT saved to the Google Sheet yet: "+r.err+". Kept on this device; it will retry automatically."),r.ok?6000:10000);if(r.ok)setTimeout(function(){syncEverything()},1500)});
+    if(added)pullAll().then(function(r){toast(r.ok?(msg+". Saved to the Google Sheet and verified \u2713 Updating the worksheets\u2026"):(msg+". NOT saved to the Google Sheet yet: "+r.err+". Kept on this device; it will retry automatically."),r.ok?6000:10000);});
+    setTimeout(function(){syncEverything()},300);
   });
 };
 function setStats(x){var t=x.data.length,m=0,v=0,sv=x.saved||{};x.data.forEach(function(r){var a=sv[r[0]];if(a)m++});return{t:t,m:m,v:v,pc:t?Math.round((m+v)/t*100):0}}
@@ -676,7 +677,7 @@ $("home").addEventListener("click",function(e){var d=e.target.closest("[data-del
 $("home").addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.classList.contains("fc"))openSet(e.target.dataset.id)});
 
 /* ---- Google Apps Script connection ---- */
-var BUILD="sync-2026-11-26c",UKEY="invAuditUrl2026v2",SURL="";
+var BUILD="sync-2026-11-26d",UKEY="invAuditUrl2026v2",SURL="";
 /* PASTE YOUR APPS SCRIPT /exec URL BETWEEN THE QUOTES. Every device uses THIS url (a per-device saved URL is only used if you set it by hand). */
 var DEFAULT_URL="https://script.google.com/macros/s/AKfycbxMG_WXYLD_HVVhM4Ul7NROmFR5jw8JZIAr8eWY9tYvlLcFzXA8Xpg-NCju_f_ad5ci/exec";
 SURL=DEFAULT_URL;
@@ -688,9 +689,13 @@ function openUrl(){drawer(false);$("urlIn").value=SURL;urlMsg("");$("upModal").h
 function closeUrl(){$("upModal").hidden=true}
 function unitRecS(r,sv){var s=sv[r[0]];return{no:r[0],model:r[1],engine:r[2],chassis:r[3],color:r[4],days:r[6]||0,extra:r[7]||{},prevLocation:prevLoc(r),found:s?"Yes":"No",location2026:s?s.loc:"",status:s?"Found":"Pending",remarks:s&&s.remarks?s.remarks:"",auditor:s&&s.by?s.by:"",prevRemarks:prevRem(r),prevAuditor:prevAud(r),savedAt:s&&s.at?s.at:""}}
 function unitRec(r){return unitRecS(r,saved)}
+function tfetch(url,opts,ms){
+  var c=window.AbortController?new AbortController():null,t=setTimeout(function(){if(c)c.abort()},ms||120000);opts=opts||{};if(c)opts.signal=c.signal;
+  return fetch(url,opts).then(function(r){clearTimeout(t);return r},function(e){clearTimeout(t);throw(e&&e.name==="AbortError")?new Error("Timed out waiting for Google Apps Script"):e});
+}
 function postSheet(body){
   if(!SURL)return Promise.reject(new Error("No URL set"));
-  return fetch(SURL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.text()}).then(function(t){
+  return tfetch(SURL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)},180000).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.text()}).then(function(t){
     var j=null;try{j=JSON.parse(t)}catch(e){}
     if(!j)throw new Error("The script did not return JSON. Check the deployment (Execute as Me, access Anyone, latest version).");
     if(j.ok===false)throw new Error(j.error||"Script error");
@@ -715,33 +720,36 @@ function syncEverything(full){
   if(full||SIG.u!==SURL){full=true;SIG={u:SURL,f:{}};sigSave()}
   var sets=DS.slice().sort(function(a,b){return a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:"base"})});
   if(!sets.length){toast("No files to sync.",2500);return}
-  // Delta sync: units na hindi nagbago mula sa huling successful sync ay hindi na ipinapadala
+  // Delta sync, pero ang bagong/pinalitang upload (x.rep) ay laging buong file at PINAPALITAN ang laman ng tab
   var jobs=[],total=0,sent=0,size=4000;
   sets.forEach(function(x){
     var sv=x.saved||{},m=SIG.f[x.name]||{},all=x.data.map(function(r){return unitRecS(r,sv)});total+=all.length;
-    var us=full?all:all.filter(function(u){return m[u.no]!==sigH(u)});
+    var rp=!!x.rep,us=(full||rp)?all:all.filter(function(u){return m[u.no]!==sigH(u)});
     sent+=us.length;
-    for(var i=0;i<us.length;i+=size)jobs.push({file:x.name,units:us.slice(i,i+size),first:i===0,fmt:i+size>=us.length});
+    for(var i=0;i<us.length;i+=size)jobs.push({x:x,file:x.name,units:us.slice(i,i+size),first:i===0,fmt:i+size>=us.length,replace:rp&&i===0});
   });
   if(!jobs.length){toast("Everything is already synced. Nothing to send.",4000);return}
-  var k=0,add=0,upd=0,files={};
-  syncing=true;
-  toast("Syncing "+sent.toLocaleString()+" changed units of "+total.toLocaleString()+"\u2026",15000);
+  var k=0,add=0,upd=0,files={},rowsBy={};
+  syncing=true;sheetErr="";
   jobs.reduce(function(p,j){
     return p.then(function(){
-      toast("Syncing "+j.file+" ("+(++k)+" of "+jobs.length+")\u2026",15000);
-      return postSheet({action:"saveAll",file:j.file,units:j.units,first:j.first,fmt:j.fmt}).then(function(r){sigSet(j.file,j.units);add+=r.added||0;upd+=r.updated||0;files[j.file]=1},function(e){e.file=j.file;throw e});
+      sheetMsg="Writing "+j.file+" to the Google Sheet ("+(++k)+" of "+jobs.length+")\u2026";chip();
+      return postSheet({action:"saveAll",file:j.file,units:j.units,first:j.first,fmt:j.fmt,replace:j.replace}).then(function(r){
+        if(j.fmt&&j.x.rep&&!(r.rows>0))throw new Error('worksheet "'+(r.tab||j.file)+'" has no rows after saving');
+        sigSet(j.file,j.units);add+=r.added||0;upd+=r.updated||0;files[j.file]=1;rowsBy[j.file]=r.rows;
+        if(j.fmt&&j.x.rep){delete j.x.rep;saveAll()}
+      },function(e){e.file=j.file;throw e});
     });
   },Promise.resolve()).then(function(){
-    syncing=false;
-    toast("Synced "+Object.keys(files).length+" files ("+sent.toLocaleString()+" units): "+add.toLocaleString()+" added, "+upd.toLocaleString()+" updated",9000);
+    syncing=false;sheetMsg="";sheetErr="";chip();
+    toast("Google Sheet updated: "+Object.keys(files).map(function(f){return f+" ("+(rowsBy[f]==null?"?":rowsBy[f])+" rows)"}).join(", "),12000);
   },function(e){
-    syncing=false;
-    toast("Sync stopped at "+(e.file||"?")+": "+e.message,10000);
+    syncing=false;sheetMsg="";sheetErr="Google Sheet NOT updated at "+(e.file||"?")+": "+e.message;chip();
+    toast(sheetErr+". It is kept and will retry; tap the status chip.",12000);
   });
 }
 $("urlBtn").onclick=openUrl;
-$("syncBtn").onclick=function(){drawer(false);syncEverything()};
+$("syncBtn").onclick=function(){drawer(false);syncEverything(true)};
 $("urlCancel").onclick=closeUrl;
 $("upModal").addEventListener("click",function(e){if(e.target===this)closeUrl()});
 $("urlSave").onclick=function(){
@@ -813,19 +821,19 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("upModal
 })();
 
 /* ---- Shared data through the Google Sheet: the computer prepares, every phone sees it ---- */
-var SMSG="",pulling=false,pullAgain=false,lastV=null,pollBusy=false,LOADING=true,waiters=[],lastOK="",lastErr="",busyMsg="",newBuild=false;
+var SMSG="",pulling=false,pullAgain=false,lastV=null,pollBusy=false,LOADING=true,waiters=[],lastOK="",lastErr="",busyMsg="",newBuild=false,sheetMsg="",sheetErr="";
 function chip(){
   var c=$("syncChip");
-  if(!c){c=document.createElement("div");c.id="syncChip";c.style.cssText="position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:5;font:11px/1.3 system-ui,sans-serif;padding:4px 8px;border-radius:10px;background:rgba(22,32,44,.88);color:#cfe3ff;max-width:80vw;cursor:pointer;opacity:.9";c.onclick=function(){if(newBuild){var u=location.href.split("#")[0].replace(/[?&]_b=\d+/,"");location.replace(u+(u.indexOf("?")<0?"?":"&")+"_b="+Date.now())}else pullAll(true)};document.body.appendChild(c)}
+  if(!c){c=document.createElement("div");c.id="syncChip";c.style.cssText="position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:5;font:11px/1.3 system-ui,sans-serif;padding:4px 8px;border-radius:10px;background:rgba(22,32,44,.88);color:#cfe3ff;max-width:80vw;cursor:pointer;opacity:.9";c.onclick=function(){if(newBuild){var u=location.href.split("#")[0].replace(/[?&]_b=\d+/,"");location.replace(u+(u.indexOf("?")<0?"?":"&")+"_b="+Date.now())}else{pullAll(true);if(sheetErr||(DS.some(function(d){return d.rep})))syncEverything()}};document.body.appendChild(c)}
   var t,bad=false;
   if(newBuild)t="\u26A0 A newer version is available. Tap to reload.";
-  else if(busyMsg)t="\u2601 "+busyMsg;
-  else if(lastErr){t="\u2601 NOT synced: "+lastErr+" (tap to retry)";bad=true}
+  else if(busyMsg||sheetMsg)t="\u2601 "+(sheetMsg||busyMsg);
+  else if(lastErr||sheetErr){t="\u2601 NOT synced: "+(sheetErr||lastErr)+" (tap to retry)";bad=true}
   else t="\u2601 "+(lastOK?"Synced "+lastOK:"Not synced yet")+" \u00B7 "+BUILD;
   c.textContent=t;c.style.background=bad||newBuild?"rgba(150,40,40,.95)":"rgba(22,32,44,.88)";
 }
 function srvGet(){
-  return fetch(SURL+(SURL.indexOf("?")<0?"?":"&")+"action=inv_getAll&_t="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.text()}).then(function(t){
+  return tfetch(SURL+(SURL.indexOf("?")<0?"?":"&")+"action=inv_getAll&_t="+Date.now(),{cache:"no-store"},120000).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.text()}).then(function(t){
     var j=null;try{j=JSON.parse(t)}catch(e){}
     if(!j)throw new Error("The script did not return JSON. Check the deployment (Execute as Me, access Anyone, latest version).");
     if(j.ok===false)throw new Error(j.error||"Script error");
@@ -928,7 +936,8 @@ goHome();
 chip();
 pullAll();
 checkBuild();
-setInterval(function(){if(!document.hidden)pullAll()},60000);
+setInterval(function(){if(!document.hidden){pullAll();if(!syncing&&DS.some(function(d){return d.rep}))syncEverything()}},60000);
+if(DS.some(function(d){return d.rep}))setTimeout(syncEverything,4000);
 setInterval(pollTick,15000);
 setInterval(checkBuild,600000);
 document.addEventListener("visibilitychange",function(){if(!document.hidden){pullAll();checkBuild()}});
