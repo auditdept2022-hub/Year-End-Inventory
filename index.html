@@ -311,6 +311,7 @@ html[data-layout="desktop"] #panel .pf{justify-content:flex-start}
   <button class="m setonly" id="copyBtn">Copy results (CSV)</button>
   <button class="m" id="urlBtn">Connect to Apps Script (URL)</button>
   <button class="m" id="syncBtn">Sync ALL files to Google Sheet</button>
+  <button class="m" id="repairBtn">Repair worksheets from saved data</button>
   <button class="m" id="themeBtn">Change theme</button>
   <button class="m setonly" id="resetBtn">Reset all saved</button>
   <h2 style="margin-top:18px">Layout</h2>
@@ -370,8 +371,18 @@ var RKEY="invAuditRef2026v1",REF={map:{},files:[],count:0};
 try{var rr=JSON.parse(localStorage.getItem(RKEY)||"null");if(rr&&rr.map)REF=rr}catch(e){}
 function saveRef(){try{localStorage.setItem(RKEY,JSON.stringify(REF))}catch(e){toast("Storage is full. Previous locations were not saved.",5000)}}
 function nk(v){v=String(v==null?"":v).toUpperCase().replace(/[^A-Z0-9]/g,"").replace(/^0+/,"");return(v.length<3||v==="UNKNOWN"||v==="NONE")?"":v}
-function isJunkRow(m,e,c){return /\btotal\b/i.test(String(m||""))||(!nk(e)&&!nk(c))}
-(function(){var ch=false;DS.forEach(function(x){var n=x.data.length;x.data=x.data.filter(function(r){return !isJunkRow(r[1],r[2],r[3])});if(x.data.length!==n)ch=true});if(ch)saveAll()})();
+var FOOT_LBL=/^\s*(prepared|checked|approved|noted|reviewed|verified|audited|received|released|certified)\s*by\b/i,TOT_CELL=/^\s*(grand\s*-?\s*total|sub\s*-?\s*total|total)\s*:?\s*$/i;
+/* Why a row is NOT a motorcycle record ("" = it is a real record). A single blank identifier is fine; only footer/total/signature rows or rows with no engine AND no chassis are rejected. */
+function junkWhy(m,e,c,ex){
+  m=String(m==null?"":m);e=String(e==null?"":e);c=String(c==null?"":c);
+  if(/\btotal\b/i.test(m))return"total row";
+  if(FOOT_LBL.test(e)||FOOT_LBL.test(c)||FOOT_LBL.test(m))return"signature/footer row";
+  if(!(nk(e)&&nk(c))&&ex&&typeof ex==="object"){var ks=Object.keys(ex);for(var i=0;i<ks.length;i++)if(TOT_CELL.test(String(ex[ks[i]])))return"total row"}
+  if(!nk(e)&&!nk(c))return"no engine or chassis";
+  return"";
+}
+function isJunkRow(m,e,c,ex){return junkWhy(m,e,c,ex)!==""}
+(function(){var ch=false;DS.forEach(function(x){var n=x.data.length;x.data=x.data.filter(function(r){return !isJunkRow(r[1],r[2],r[3],r[7])});if(x.data.length!==n)ch=true});if(ch)saveAll()})();
 function yrOf(t){var m=String(t).match(/20\d\d/);return m?+m[0]:2025}
 function prevRem(r){
   var a=nk(r[2]),b=nk(r[3]),m=REF.map,o=(a&&m[a]&&m[a][2]?m[a]:null)||(b&&m[b]&&m[b][2]?m[b]:null);
@@ -593,9 +604,10 @@ function mapRows(rows){
   for(var r=hi+1;r<rows.length;r++){
     var x=rows[r];function g(c){return c<0||x[c]==null?"":String(x[c]).trim()}
     var model=g(cM),eng=g(cE),ch=g(cC);
-    if(!model&&!eng&&!ch)continue;if(isJunkRow(model,eng,ch))continue;
-    var key=(eng+"|"+ch).toLowerCase();if(seen[key])continue;seen[key]=1;
+    if(!model&&!eng&&!ch)continue;
     var ex={};rows[hi].forEach(function(hd,ci){var n=String(hd).trim();if(n&&[cNo,cM,cE,cC,cCol,cD].indexOf(ci)<0&&g(ci)&&ex[n]==null)ex[n]=g(ci)});
+    if(isJunkRow(model,eng,ch,ex))continue;
+    var key=(eng+"|"+ch).toLowerCase();if(seen[key])continue;seen[key]=1;
     out.push({no:parseInt(g(cNo),10)||0,model:model,engine:eng,chassis:ch,color:g(cCol),loc:(function(){for(var q=0;q<locCols.length;q++){var v=g(locCols[q].i);if(v&&v!=="-")return v}return""})(),days:parseInt(g(cD).replace(/,/g,""),10)||0,extra:ex});
   }
   return out;
@@ -644,7 +656,7 @@ $("upFile").onchange=function(){
 function setStats(x){var t=x.data.length,m=0,v=0,sv=x.saved||{};x.data.forEach(function(r){var a=sv[r[0]];if(a)m++});return{t:t,m:m,v:v,pc:t?Math.round((m+v)/t*100):0}}
 function renderHome(){
   var tot=0,h=DS.slice().sort(function(a,b){return a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:"base"})}).map(function(x){var st=setStats(x);tot+=st.t;
-    return '<div class="fc" data-id="'+x.id+'" tabindex="0"><button class="x" data-del="'+x.id+'" aria-label="Delete file">\u2715</button><div class="fn">'+esc(x.name)+'</div><div class="fm">'+st.t.toLocaleString()+' units</div><div class="bar"><i style="width:'+st.pc+'%"></i></div><div class="fs">'+st.pc+'% checked: '+st.m+' found</div></div>'}).join("");
+    return '<div class="fc" data-id="'+x.id+'" tabindex="0"><button class="x" data-del="'+x.id+'" aria-label="Delete file">\u2715</button><div class="fn">'+esc(x.name)+'</div><div class="fm">'+st.t.toLocaleString()+' units</div><div class="bar"><i style="width:'+st.pc+'%"></i></div><div class="fs">'+st.pc+'% checked: '+st.m+' found'+(x.sync?(x.sync.state==="verified"?' \u00B7 Sheet \u2713 '+x.sync.rows+' rows':' \u00B7 Sheet \u2717 not verified'):'')+'</div></div>'}).join("");
   $("home").innerHTML='<div class="hh"><div><h2>Inventory files</h2><p>'+(DS.length?DS.length+" files, "+tot.toLocaleString()+" units. Click a file to start checking.":LOADING?"Loading shared files from the Google Sheet\u2026":"No files yet. Open the menu (\u2630) and tap Upload file to add your first inventory file (.csv or .xlsx)."+(SMSG?" Could not load shared files: "+SMSG:(SURL?"":" Connect to Apps Script in the menu to share files with phones.")))+(REF.count?" Previous locations loaded for "+REF.count.toLocaleString()+" units.":"")+'</p></div></div>'+(DS.length?'<div class="fg">'+h+'</div>':"");
 }
 function setOnly(on){document.querySelectorAll(".setonly").forEach(function(b){b.hidden=!on});document.querySelectorAll(".homeonly").forEach(function(b){b.hidden=on})}
@@ -677,7 +689,7 @@ $("home").addEventListener("click",function(e){var d=e.target.closest("[data-del
 $("home").addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.classList.contains("fc"))openSet(e.target.dataset.id)});
 
 /* ---- Google Apps Script connection ---- */
-var BUILD="sync-2026-11-26d",UKEY="invAuditUrl2026v2",SURL="";
+var BUILD="verified-sync-2026-11-26e",UKEY="invAuditUrl2026v2",SURL="";
 /* PASTE YOUR APPS SCRIPT /exec URL BETWEEN THE QUOTES. Every device uses THIS url (a per-device saved URL is only used if you set it by hand). */
 var DEFAULT_URL="https://script.google.com/macros/s/AKfycbxMG_WXYLD_HVVhM4Ul7NROmFR5jw8JZIAr8eWY9tYvlLcFzXA8Xpg-NCju_f_ad5ci/exec";
 SURL=DEFAULT_URL;
@@ -693,12 +705,16 @@ function tfetch(url,opts,ms){
   var c=window.AbortController?new AbortController():null,t=setTimeout(function(){if(c)c.abort()},ms||120000);opts=opts||{};if(c)opts.signal=c.signal;
   return fetch(url,opts).then(function(r){clearTimeout(t);return r},function(e){clearTimeout(t);throw(e&&e.name==="AbortError")?new Error("Timed out waiting for Google Apps Script"):e});
 }
-function postSheet(body){
+function postSheet(body,_try){
+  _try=_try||0;
   if(!SURL)return Promise.reject(new Error("No URL set"));
   return tfetch(SURL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)},180000).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.text()}).then(function(t){
     var j=null;try{j=JSON.parse(t)}catch(e){}
     if(!j)throw new Error("The script did not return JSON. Check the deployment (Execute as Me, access Anyone, latest version).");
-    if(j.ok===false)throw new Error(j.error||"Script error");
+    if(j.ok===false){
+      if(j.busy&&_try<3)return new Promise(function(r){setTimeout(r,3000*(_try+1))}).then(function(){return postSheet(body,_try+1)});
+      throw new Error(j.error||"Script error");
+    }
     return j;
   });
 }
@@ -712,44 +728,105 @@ try{var gs=JSON.parse(localStorage.getItem(GKEY)||"null");if(gs&&gs.f)SIG=gs}cat
 function sigH(u){var t=JSON.stringify(u),h=5381,i;for(i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return h.toString(36)+t.length}
 function sigSave(){try{localStorage.setItem(GKEY,JSON.stringify(SIG))}catch(e){}}
 function sigSet(file,us){if(SIG.u!==SURL){SIG={u:SURL,f:{}}}var m=SIG.f[file]||(SIG.f[file]={});us.forEach(function(u){m[u.no]=sigH(u)});sigSave()}
-function syncEverything(full){
+/* ---- ONE-AT-A-TIME QUEUE: pullAll(), syncEverything() and repair never run at the same time ---- */
+var LOCKQ=Promise.resolve();
+function exclusive(fn){var run=LOCKQ.then(fn,fn);LOCKQ=run.then(function(){},function(){});return run}
+var SESS_VER={};   /* files already compared with their worksheet in this page session */
+function snk(v){return String(v==null?"":v).toUpperCase().replace(/[^A-Z0-9]/g,"")}
+function skey(u){return snk(u.engine)+"|"+snk(u.chassis)}
+/* Sync ONE file. Never rejects. The signature is saved only after the whole file passed read-back verification. */
+function syncFile(x,full){
+  var st={file:x.name,state:"pending",source:x.data.length,junk:0,reasons:{},dups:0,expected:0,mode:"delta",sent:0,received:0,accepted:0,added:0,updated:0,rows:0,missing:0,err:"",warn:""};
+  var sv=x.saved||{},valid=[],keys={};
+  x.data.forEach(function(r){
+    var why=junkWhy(r[1],r[2],r[3],r[7]);
+    if(why){st.junk++;st.reasons[why]=(st.reasons[why]||0)+1;return}
+    var u=unitRecS(r,sv),k=skey(u);
+    if(keys[k]){st.dups++;return}        /* same engine+chassis again: the worksheet has ONE row per pair */
+    keys[k]=1;valid.push(u);
+  });
+  st.expected=valid.length;
+  if(!valid.length){st.state="failed";st.err="no valid records to write";return Promise.resolve(st)}
+  var rp=!!x.rep,needFull=!!(full||rp),m=SIG.f[x.name]||{},us=[],lastV=null;
+  function verify(){return postSheet({action:"inv_verifyTab",file:x.name,keys:valid.map(skey),models:valid.map(function(u){return snk(u.model)})})}
+  var pre=Promise.resolve();
+  /* self-heal: a file that was never compared with its worksheet (or failed last time) is checked first; if records are missing the signatures are ignored */
+  if(!needFull&&(!SESS_VER[x.name]||!x.sync||x.sync.state!=="verified"))pre=verify().then(function(v){lastV=v;if(v.missing>0)needFull=true});
+  return pre.then(function(){
+    st.mode=rp?"replace":needFull?"full":"delta";
+    if(needFull&&SIG.f)delete SIG.f[x.name];
+    m=SIG.f[x.name]||{};
+    us=needFull?valid:valid.filter(function(u){return m[u.no]!==sigH(u)});
+    var size=1000,jobs=[];
+    for(var i=0;i<us.length;i+=size)jobs.push({units:us.slice(i,i+size),first:i===0,fmt:i+size>=us.length,replace:rp&&i===0});
+    if(!jobs.length&&lastV&&lastV.dupKeyRows===0&&lastV.blankKeyRows===0&&lastV.rows>=st.expected)return lastV;    /* nothing changed and the worksheet is complete */
+    return jobs.reduce(function(p,j){return p.then(function(){
+      return postSheet({action:"saveAll",file:x.name,units:j.units,first:j.first,fmt:j.fmt,replace:j.replace}).then(function(r){
+        if(r.received==null)throw new Error("The Apps Script is the OLD version. Deploy the new Code.gs as a new version.");
+        if(r.received!==j.units.length)throw new Error("Apps Script received "+r.received+" of "+j.units.length+" records");
+        if(r.accepted!==j.units.length||(r.junk||0)!==0)throw new Error("Apps Script rejected "+(r.junk||0)+" record(s): "+JSON.stringify(r.junkReasons||{}));
+        if(r.added+r.matched+r.dupSkipped!==r.accepted)throw new Error("Batch accounting does not add up");
+        if(r.verified!==true)throw new Error("Read-back found "+r.missing+" of "+r.accepted+" records missing in the worksheet");
+        st.sent+=j.units.length;st.received+=r.received;st.accepted+=r.accepted;st.added+=r.added;st.updated+=r.updated;
+      });
+    })},Promise.resolve()).then(verify);
+  }).then(function(v){
+    st.rows=v.rows;st.missing=v.missing;
+    if(v.missing>0)throw new Error(v.missing+" of "+st.expected+" records missing in the worksheet after writing (e.g. "+(v.missingSample||[]).slice(0,3).join(", ")+")");
+    if(v.blankKeyRows>0)throw new Error(v.blankKeyRows+" worksheet row(s) have no engine/chassis");
+    if(v.dupKeyRows>0)throw new Error(v.dupKeyRows+" duplicate engine/chassis row(s) in the worksheet");
+    if(v.rows<st.expected)throw new Error("worksheet has "+v.rows+" rows but "+st.expected+" are expected");
+    if((rp||needFull)&&st.mode==="replace"&&v.rows!==st.expected)throw new Error("worksheet has "+v.rows+" rows after replace but "+st.expected+" are expected");
+    if(v.modelMismatch>0)st.warn=v.modelMismatch+" model value(s) differ";
+    if(v.extra>0)st.warn=(st.warn?st.warn+"; ":"")+v.extra+" extra worksheet row(s) not in this file (left untouched)";
+    sigSet(x.name,valid);                     /* ONLY now is the file marked as synchronized */
+    delete x.rep;SESS_VER[x.name]=1;st.state="verified";return st;
+  }).catch(function(e){st.state="failed";st.err=(e&&e.message)||String(e);return st});
+}
+function syncNow(full){
   full=(full===true);
-  if(syncing)return;
-  if(!SURL){toast("Set the Apps Script URL first (Menu > Connect to Apps Script).",4000);return}
+  if(!SURL){toast("Set the Apps Script URL first (Menu > Connect to Apps Script).",4000);return Promise.resolve()}
   saveAll();
-  if(full||SIG.u!==SURL){full=true;SIG={u:SURL,f:{}};sigSave()}
+  if(SIG.u!==SURL){SIG={u:SURL,f:{}};sigSave();full=true}
+  if(full)SESS_VER={};
   var sets=DS.slice().sort(function(a,b){return a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:"base"})});
-  if(!sets.length){toast("No files to sync.",2500);return}
-  // Delta sync, pero ang bagong/pinalitang upload (x.rep) ay laging buong file at PINAPALITAN ang laman ng tab
-  var jobs=[],total=0,sent=0,size=4000;
-  sets.forEach(function(x){
-    var sv=x.saved||{},m=SIG.f[x.name]||{},all=x.data.map(function(r){return unitRecS(r,sv)});total+=all.length;
-    var rp=!!x.rep,us=(full||rp)?all:all.filter(function(u){return m[u.no]!==sigH(u)});
-    sent+=us.length;
-    for(var i=0;i<us.length;i+=size)jobs.push({x:x,file:x.name,units:us.slice(i,i+size),first:i===0,fmt:i+size>=us.length,replace:rp&&i===0});
-  });
-  if(!jobs.length){toast("Everything is already synced. Nothing to send.",4000);return}
-  var k=0,add=0,upd=0,files={},rowsBy={};
-  syncing=true;sheetErr="";
-  jobs.reduce(function(p,j){
-    return p.then(function(){
-      sheetMsg="Writing "+j.file+" to the Google Sheet ("+(++k)+" of "+jobs.length+")\u2026";chip();
-      return postSheet({action:"saveAll",file:j.file,units:j.units,first:j.first,fmt:j.fmt,replace:j.replace}).then(function(r){
-        if(j.fmt&&j.x.rep&&!(r.rows>0))throw new Error('worksheet "'+(r.tab||j.file)+'" has no rows after saving');
-        sigSet(j.file,j.units);add+=r.added||0;upd+=r.updated||0;files[j.file]=1;rowsBy[j.file]=r.rows;
-        if(j.fmt&&j.x.rep){delete j.x.rep;saveAll()}
-      },function(e){e.file=j.file;throw e});
+  if(!sets.length){toast("No files to sync.",2500);return Promise.resolve()}
+  syncing=true;sheetErr="";var results=[];
+  return sets.reduce(function(p,x,idx){return p.then(function(){
+    sheetMsg="Checking "+x.name+" ("+(idx+1)+" of "+sets.length+")\u2026";chip();
+    return syncFile(x,full).then(function(st){
+      x.sync={state:st.state,at:new Date().toISOString(),rows:st.rows,expected:st.expected,err:st.err||""};
+      results.push(st);saveAll();
     });
-  },Promise.resolve()).then(function(){
-    syncing=false;sheetMsg="";sheetErr="";chip();
-    toast("Google Sheet updated: "+Object.keys(files).map(function(f){return f+" ("+(rowsBy[f]==null?"?":rowsBy[f])+" rows)"}).join(", "),12000);
-  },function(e){
-    syncing=false;sheetMsg="";sheetErr="Google Sheet NOT updated at "+(e.file||"?")+": "+e.message;chip();
-    toast(sheetErr+". It is kept and will retry; tap the status chip.",12000);
+  })},Promise.resolve()).then(function(){
+    syncing=false;sheetMsg="";
+    var bad=results.filter(function(s){return s.state!=="verified"}),good=results.filter(function(s){return s.state==="verified"});
+    try{console.log("SYNC REPORT",JSON.stringify(results))}catch(e){}
+    if(bad.length){sheetErr="Google Sheet NOT fully updated: "+bad.map(function(s){return s.file+" ("+s.err+")"}).join("; ");chip();toast(sheetErr+". Other files were still processed. It will retry; tap the status chip.",14000)}
+    else{chip();toast("Google Sheet verified: "+good.map(function(s){return s.file+" "+s.rows+"/"+s.expected+(s.sent?" (sent "+s.sent+")":"")}).join(", "),10000)}
+    if(!curSet)renderHome();
+    return results;
   });
+}
+var syncWait=null;
+function syncEverything(full){
+  if(syncWait){if(full===true)syncWait.full=true;return syncWait.p}
+  var rec={full:full===true};
+  rec.p=exclusive(function(){syncWait=null;return syncNow(rec.full)});
+  syncWait=rec;return rec.p;
 }
 $("urlBtn").onclick=openUrl;
 $("syncBtn").onclick=function(){drawer(false);syncEverything(true)};
+$("repairBtn").onclick=function(){
+  drawer(false);if(!SURL){toast("Set the Apps Script URL first (Menu > Connect to Apps Script).",4000);return}
+  if(!confirm("Rebuild the visible worksheets from the data saved in the Google Sheet's hidden storage?\nNothing is deleted; missing records are added and audit information is kept. It can take a minute."))return;
+  toast("Repairing worksheets\u2026 please wait",30000);
+  exclusive(function(){return postSheet({action:"inv_repair"})}).then(function(r){
+    var rp=r.report||[];SESS_VER={};
+    toast(rp.map(function(f){return f.file+": "+f.state+(f.state==="VERIFIED"?" ("+f.sheetRows+" rows, +"+f.added+")":(f.error?" - "+f.error:""))}).join(" | "),20000);
+    syncEverything(true);
+  },function(e){toast("Repair failed: "+e.message,9000)});
+};
 $("urlCancel").onclick=closeUrl;
 $("upModal").addEventListener("click",function(e){if(e.target===this)closeUrl()});
 $("urlSave").onclick=function(){
@@ -860,9 +937,15 @@ function pushFile(x,clr){
 function pushAudit(file,id,s){if(SURL)srvPush({action:"inv_putAudit",file:file,no:id,s:s}).catch(function(e){lastErr="audit not saved yet ("+e.message+"); kept on this device";chip();setTimeout(pullAll,8000)})}
 function newer(a,b){return String(a&&a.at||"")>String(b&&b.at||"")}
 function uniqName(base){var n=base,k=1;while(DS.some(function(d){return d.name.toLowerCase()===n.toLowerCase()}))n=base+" "+(++k);return n}
+var pullWait=null;
 function pullAll(manual){
   if(!SURL)return Promise.resolve({ok:false,err:"No URL set"});
-  if(pulling){pullAgain=true;return new Promise(function(r){waiters.push(r)})}
+  if(pullWait){if(manual)pullWait.manual=true;return pullWait.p}
+  var rec={manual:!!manual};
+  rec.p=exclusive(function(){pullWait=null;return pullAllNow(rec.manual)});
+  pullWait=rec;return rec.p;
+}
+function pullAllNow(manual){
   pulling=true;busyMsg="Syncing\u2026";chip();
   var result={ok:false,err:""};
   return srvGet().then(function(o){
@@ -921,8 +1004,6 @@ function pullAll(manual){
     if(!curSet)renderHome();
   }).then(function(){
     pulling=false;LOADING=false;busyMsg="";chip();if(!curSet&&!$("home").hidden)renderHome();
-    var w=waiters;waiters=[];
-    if(pullAgain){pullAgain=false;pullAll().then(function(r){w.forEach(function(f){f(r)})})}else w.forEach(function(f){f(result)});
     return result;
   });
 }
@@ -934,9 +1015,9 @@ function checkBuild(){
 urlLbl();
 goHome();
 chip();
-pullAll();
+pullAll().then(function(){syncEverything()});     /* every page load: pull first, then compare each worksheet with the stored data and fix what is missing */
 checkBuild();
-setInterval(function(){if(!document.hidden){pullAll();if(!syncing&&DS.some(function(d){return d.rep}))syncEverything()}},60000);
+setInterval(function(){if(!document.hidden){pullAll();if(!syncing&&(sheetErr||DS.some(function(d){return d.rep||(d.sync&&d.sync.state==="failed")})))syncEverything()}},60000);
 if(DS.some(function(d){return d.rep}))setTimeout(syncEverything,4000);
 setInterval(pollTick,15000);
 setInterval(checkBuild,600000);
