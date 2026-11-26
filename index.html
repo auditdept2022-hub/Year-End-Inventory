@@ -6,6 +6,8 @@
 <meta name="theme-color" content="#16202c">
 <link rel="apple-touch-icon" href="logo/apple-touch-icon.png">
 <meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Year-End Inventory Audit</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -631,17 +633,18 @@ $("upFile").onchange=function(){
       }).catch(function(e){errs.push(e.message)});
     });
   },Promise.resolve()).then(function(){
-    curSet=null;DATA=[];saved={};draft={};saveAll();goHome();pullAll();
+    curSet=null;DATA=[];saved={};draft={};saveAll();goHome();
     var msg=added?added+" file"+(added>1?"s":"")+" added ("+units.toLocaleString()+" units)":"";
     if(errs.length)msg+=(msg?". ":"")+errs.join(" ");
-    toast(msg||"No files were added.",errs.length?6000:3000);
+    toast((msg||"No files were added.")+(added?" \u2013 saving to Google Sheet\u2026":""),errs.length?6000:4000);
+    if(added)pullAll().then(function(r){toast(r.ok?(msg+". Saved to the Google Sheet and verified \u2713"):(msg+". NOT saved to the Google Sheet yet: "+r.err+". Kept on this device; it will retry automatically."),r.ok?6000:10000)});
   });
 };
 function setStats(x){var t=x.data.length,m=0,v=0,sv=x.saved||{};x.data.forEach(function(r){var a=sv[r[0]];if(a)m++});return{t:t,m:m,v:v,pc:t?Math.round((m+v)/t*100):0}}
 function renderHome(){
   var tot=0,h=DS.slice().sort(function(a,b){return a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:"base"})}).map(function(x){var st=setStats(x);tot+=st.t;
     return '<div class="fc" data-id="'+x.id+'" tabindex="0"><button class="x" data-del="'+x.id+'" aria-label="Delete file">\u2715</button><div class="fn">'+esc(x.name)+'</div><div class="fm">'+st.t.toLocaleString()+' units</div><div class="bar"><i style="width:'+st.pc+'%"></i></div><div class="fs">'+st.pc+'% checked: '+st.m+' found</div></div>'}).join("");
-  $("home").innerHTML='<div class="hh"><div><h2>Inventory files</h2><p>'+(DS.length?DS.length+" files, "+tot.toLocaleString()+" units. Click a file to start checking.":"No files yet. Open the menu (\u2630) and tap Upload file to add your first inventory file (.csv or .xlsx)."+(SMSG?" Could not load shared files: "+SMSG:(SURL?"":" Connect to Apps Script in the menu to share files with phones.")))+(REF.count?" Previous locations loaded for "+REF.count.toLocaleString()+" units.":"")+'</p></div></div>'+(DS.length?'<div class="fg">'+h+'</div>':"");
+  $("home").innerHTML='<div class="hh"><div><h2>Inventory files</h2><p>'+(DS.length?DS.length+" files, "+tot.toLocaleString()+" units. Click a file to start checking.":LOADING?"Loading shared files from the Google Sheet\u2026":"No files yet. Open the menu (\u2630) and tap Upload file to add your first inventory file (.csv or .xlsx)."+(SMSG?" Could not load shared files: "+SMSG:(SURL?"":" Connect to Apps Script in the menu to share files with phones.")))+(REF.count?" Previous locations loaded for "+REF.count.toLocaleString()+" units.":"")+'</p></div></div>'+(DS.length?'<div class="fg">'+h+'</div>':"");
 }
 function setOnly(on){document.querySelectorAll(".setonly").forEach(function(b){b.hidden=!on});document.querySelectorAll(".homeonly").forEach(function(b){b.hidden=on})}
 function goHome(){closePanel();saveAll();curSet=null;DATA=[];saved={};draft={};$("home").hidden=false;$("dash").hidden=true;$("backBtn").hidden=true;$("subT").textContent="Select an inventory file";setOnly(false);renderHome();window.scrollTo(0,0)}
@@ -664,11 +667,11 @@ $("home").addEventListener("click",function(e){var d=e.target.closest("[data-del
 $("home").addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.classList.contains("fc"))openSet(e.target.dataset.id)});
 
 /* ---- Google Apps Script connection ---- */
-var UKEY="invAuditUrl2026v1",SURL="";
-/* PASTE YOUR APPS SCRIPT /exec URL BETWEEN THE QUOTES. Every phone then connects by itself. */
+var BUILD="sync-2026-11-26a",UKEY="invAuditUrl2026v2",SURL="";
+/* PASTE YOUR APPS SCRIPT /exec URL BETWEEN THE QUOTES. Every device uses THIS url (a per-device saved URL is only used if you set it by hand). */
 var DEFAULT_URL="https://script.google.com/macros/s/AKfycbxMG_WXYLD_HVVhM4Ul7NROmFR5jw8JZIAr8eWY9tYvlLcFzXA8Xpg-NCju_f_ad5ci/exec";
-try{SURL=localStorage.getItem(UKEY)||""}catch(e){}
-if(!SURL)SURL=DEFAULT_URL;
+SURL=DEFAULT_URL;
+try{localStorage.removeItem("invAuditUrl2026v1");var ov=localStorage.getItem(UKEY);if(ov&&/^https:\/\/script\.google\.com\/.+\/exec$/.test(ov))SURL=ov}catch(e){}
 function urlLbl(){$("urlBtn").textContent=SURL?"Apps Script: connected \u2713 (edit URL)":"Connect to Apps Script (URL)"}
 function urlOk(u){return /^https:\/\/script\.google\.com\/.+\/exec$/.test(u)}
 function urlMsg(t,bad){var e=$("upInfo");e.textContent=t||"";e.className=bad?"e":""}
@@ -735,10 +738,10 @@ $("upModal").addEventListener("click",function(e){if(e.target===this)closeUrl()}
 $("urlSave").onclick=function(){
   var u=$("urlIn").value.trim();
   if(!urlOk(u)){urlMsg("The URL should look like https://script.google.com/macros/s/.../exec",true);return}
-  SURL=u;try{localStorage.setItem(UKEY,SURL)}catch(e){}
+  SURL=u;try{if(u===DEFAULT_URL)localStorage.removeItem(UKEY);else localStorage.setItem(UKEY,SURL)}catch(e){}lastV=null;
   urlLbl();closeUrl();syncEverything();
 };
-$("urlClr").onclick=function(){SURL="";try{localStorage.removeItem(UKEY)}catch(e){}urlLbl();closeUrl();toast("Apps Script URL removed")};
+$("urlClr").onclick=function(){SURL=DEFAULT_URL;try{localStorage.removeItem(UKEY)}catch(e){}lastV=null;urlLbl();closeUrl();toast("Using the default Apps Script URL");pullAll(true)};
 $("urlTest").onclick=function(){
   var u=$("urlIn").value.trim();
   if(!urlOk(u)){urlMsg("The URL should look like https://script.google.com/macros/s/.../exec",true);return}
@@ -801,12 +804,23 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("upModal
 })();
 
 /* ---- Shared data through the Google Sheet: the computer prepares, every phone sees it ---- */
-var SMSG="",pulling=false,pullAgain=false,lastV=null,pollBusy=false;
+var SMSG="",pulling=false,pullAgain=false,lastV=null,pollBusy=false,LOADING=true,waiters=[],lastOK="",lastErr="",busyMsg="",newBuild=false;
+function chip(){
+  var c=$("syncChip");
+  if(!c){c=document.createElement("div");c.id="syncChip";c.style.cssText="position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:5;font:11px/1.3 system-ui,sans-serif;padding:4px 8px;border-radius:10px;background:rgba(22,32,44,.88);color:#cfe3ff;max-width:80vw;cursor:pointer;opacity:.9";c.onclick=function(){if(newBuild){var u=location.href.split("#")[0].replace(/[?&]_b=\d+/,"");location.replace(u+(u.indexOf("?")<0?"?":"&")+"_b="+Date.now())}else pullAll(true)};document.body.appendChild(c)}
+  var t,bad=false;
+  if(newBuild)t="\u26A0 A newer version is available. Tap to reload.";
+  else if(busyMsg)t="\u2601 "+busyMsg;
+  else if(lastErr){t="\u2601 NOT synced: "+lastErr+" (tap to retry)";bad=true}
+  else t="\u2601 "+(lastOK?"Synced "+lastOK:"Not synced yet")+" \u00B7 "+BUILD;
+  c.textContent=t;c.style.background=bad||newBuild?"rgba(150,40,40,.95)":"rgba(22,32,44,.88)";
+}
 function srvGet(){
   return fetch(SURL+(SURL.indexOf("?")<0?"?":"&")+"action=inv_getAll&_t="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.text()}).then(function(t){
     var j=null;try{j=JSON.parse(t)}catch(e){}
     if(!j)throw new Error("The script did not return JSON. Check the deployment (Execute as Me, access Anyone, latest version).");
     if(j.ok===false)throw new Error(j.error||"Script error");
+    if(!Array.isArray(j.sets))throw new Error("The Apps Script deployment is outdated (no shared-file support). Deploy the new Code.gs as a NEW VERSION of the same deployment.");
     return j;
   });
 }
@@ -818,15 +832,25 @@ function pollTick(){
   }).catch(function(){pollBusy=false});
 }
 function srvPush(body){return SURL?postSheet(body):Promise.reject(new Error("No URL set"))}
-function pushAudit(file,id,s){if(SURL)srvPush({action:"inv_putAudit",file:file,no:id,s:s}).catch(function(){})}
+/* A file counts as saved ONLY when the script confirms it read back the same number of units */
+function pushFile(x,clr){
+  var n=x.data.length,sig=sigH(x.data);
+  return srvPush({action:"inv_putFile",name:x.name,data:x.data,clear:!!clr}).then(function(r){
+    if(r.verified!==true||r.units!==n)throw new Error('Google Sheet did not confirm "'+x.name+'" ('+(r.units==null?"no reply":r.units+" of "+n+" units")+")");
+    x.srv=sig;delete x.clr;return r;
+  });
+}
+function pushAudit(file,id,s){if(SURL)srvPush({action:"inv_putAudit",file:file,no:id,s:s}).catch(function(e){lastErr="audit not saved yet ("+e.message+"); kept on this device";chip();setTimeout(pullAll,8000)})}
 function newer(a,b){return String(a&&a.at||"")>String(b&&b.at||"")}
+function uniqName(base){var n=base,k=1;while(DS.some(function(d){return d.name.toLowerCase()===n.toLowerCase()}))n=base+" "+(++k);return n}
 function pullAll(manual){
-  if(!SURL)return;
-  if(pulling){pullAgain=true;return}
-  pulling=true;
-  srvGet().then(function(o){
+  if(!SURL)return Promise.resolve({ok:false,err:"No URL set"});
+  if(pulling){pullAgain=true;return new Promise(function(r){waiters.push(r)})}
+  pulling=true;busyMsg="Syncing\u2026";chip();
+  var result={ok:false,err:""};
+  return srvGet().then(function(o){
     lastV=o.v;
-    var changed=false,jobs=[],srvNames={};
+    var changed=false,jobs=[],srvNames={},del=o.deleted||{};
     var cl=o.cleared||{},au=o.audits||{};
     (o.sets||[]).forEach(function(sv){
       if(!sv||!sv.name||!Array.isArray(sv.data))return;
@@ -835,46 +859,73 @@ function pullAll(manual){
       if(!ex){ex={id:"s"+Date.now()+"_"+Math.floor(Math.random()*1e6),name:sv.name,data:sv.data,saved:{},srv:ssig};DS.push(ex);changed=true}
       else{
         var lsig=sigH(ex.data);
-        if(lsig===ssig){ex.srv=ssig}
-        else if(ex.srv&&ex.srv!==ssig&&lsig===ex.srv){ex.data=sv.data;ex.srv=ssig;if(ex===curSet)DATA=ex.data;changed=true}
-        else{(function(x,clr){jobs.push(function(){return srvPush({action:"inv_putFile",name:x.name,data:x.data,clear:clr}).then(function(){x.srv=sigH(x.data);delete x.clr})})})(ex,!!ex.clr)}
+        if(lsig===ssig){ex.srv=ssig;delete ex.clr}
+        else if(ex.clr){(function(x){jobs.push(function(){return pushFile(x,true)})})(ex)}                       /* you replaced this file on this device on purpose */
+        else if(ex.srv&&ex.srv===ssig){(function(x){jobs.push(function(){return pushFile(x,false)})})(ex)}      /* only this device changed it */
+        else if(ex.srv&&lsig===ex.srv){ex.data=sv.data;ex.srv=ssig;if(ex===curSet)DATA=ex.data;changed=true}    /* only the server changed it */
+        else{                                                                                                    /* both differ, or never synced: keep BOTH, never overwrite the cloud copy */
+          var cp={id:"s"+Date.now()+"_"+Math.floor(Math.random()*1e6),name:uniqName(ex.name+" (this device copy)"),data:ex.data,saved:ex.saved||{},clr:1};
+          DS.push(cp);ex.data=sv.data;ex.saved={};ex.srv=ssig;delete ex.clr;if(ex===curSet)DATA=ex.data;changed=true;
+          toast('"'+ex.name+'" differed from the Google Sheet. Cloud version kept; your version saved as "'+cp.name+'".',9000);
+        }
       }
       var sa=au[sv.name]||{},sc=cl[sv.name]||"";ex.saved=ex.saved||{};
       Object.keys(ex.saved).forEach(function(k){if(sc&&String(ex.saved[k]&&ex.saved[k].at||"")<sc){delete ex.saved[k];changed=true}});
       Object.keys(sa).forEach(function(k){if(!ex.saved[k]||newer(sa[k],ex.saved[k])){ex.saved[k]=sa[k];changed=true}});
       var items=[];Object.keys(ex.saved).forEach(function(k){if(!sa[k]||newer(ex.saved[k],sa[k]))items.push({no:isNaN(+k)?k:+k,s:ex.saved[k]})});
       if(items.length)(function(nm,it){jobs.push(function(){return srvPush({action:"inv_putAudits",file:nm,items:it})})})(ex.name,items);
-      if(ex===curSet)saved=ex.saved;
+      if(ex===curSet){saved=ex.saved;DATA=ex.data}
     });
     DS.slice().forEach(function(x){
       if(srvNames[x.name.toLowerCase()])return;
-      if(x.srv){
+      if(x.srv&&del[x.name]){                                    /* deleted on another device (server holds a delete record) */
         DS=DS.filter(function(d){return d!==x});changed=true;
         if(x===curSet){curSet=null;DATA=[];saved={};draft={};closePanel();$("home").hidden=false;$("dash").hidden=true;$("backBtn").hidden=true;$("subT").textContent="Select an inventory file";setOnly(false)}
-      }else{(function(d){jobs.push(function(){return srvPush({action:"inv_putFile",name:d.name,data:d.data,clear:!!d.clr}).then(function(){d.srv=sigH(d.data);delete d.clr;var it=[];Object.keys(d.saved||{}).forEach(function(k){it.push({no:isNaN(+k)?k:+k,s:d.saved[k]})});return it.length?srvPush({action:"inv_putAudits",file:d.name,items:it}):0})})})(x)}
+      }else{                                                     /* new here, or missing from the server without a delete record: upload it, never drop it */
+        (function(d){jobs.push(function(){return pushFile(d,!!d.clr).then(function(){var it=[];Object.keys(d.saved||{}).forEach(function(k){it.push({no:isNaN(+k)?k:+k,s:d.saved[k]})});return it.length?srvPush({action:"inv_putAudits",file:d.name,items:it}):0})})})(x)
+      }
     });
     var lr=sigH(REF.map||{}),rr=o.ref&&o.ref.map?o.ref:null,rs=rr?sigH(rr.map):null;
     if(rr&&rr.count&&!REF.count&&!REF.srv){REF={map:rr.map,files:rr.files||[],count:rr.count,srv:rs};changed=true}
     else if(rr&&lr===rs){if(REF.srv!==rs)REF.srv=rs}
     else if(rr&&REF.srv&&REF.srv!==rs&&lr===REF.srv){REF={map:rr.map,files:rr.files||[],count:rr.count||Object.keys(rr.map).length,srv:rs};changed=true}
-    else if(REF.count||rr){jobs.push(function(){return srvPush({action:"inv_putRef",ref:{map:REF.map,files:REF.files,count:REF.count}}).then(function(){REF.srv=sigH(REF.map)})})}
+    else if(REF.count){jobs.push(function(){return srvPush({action:"inv_putRef",ref:{map:REF.map,files:REF.files,count:REF.count}}).then(function(){REF.srv=sigH(REF.map)})})}
+    saveAll();saveRef();
     return jobs.reduce(function(p,j){return p.then(j)},Promise.resolve()).then(function(){
-      SMSG="";
-      if(changed||jobs.length){saveAll();saveRef();if(!curSet)renderHome();else if(changed&&cur==null){buildFilters();render()}}
+      SMSG="";lastErr="";lastOK=new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+      if(jobs.length){lastV=null}                                /* we changed the server: re-check its version next poll */
+      saveAll();saveRef();if(!curSet)renderHome();else if(changed&&cur==null){buildFilters();render()}
       if(manual)toast(changed?"Files updated from the Google Sheet.":"Files are up to date.",3000);
+      result={ok:true,err:""};
     });
   }).catch(function(e){
-    SMSG=e.message||"unknown error";
-    if(manual)toast("Could not load files: "+SMSG,6000);
-    if(!curSet&&!DS.length)renderHome();
-  }).then(function(){pulling=false;if(pullAgain){pullAgain=false;setTimeout(pullAll,300)}});
+    SMSG=e.message||"unknown error";lastErr=SMSG;result={ok:false,err:SMSG};
+    if(manual)toast("Could not sync: "+SMSG,6000);
+    if(!curSet)renderHome();
+  }).then(function(){
+    pulling=false;LOADING=false;busyMsg="";chip();if(!curSet&&!$("home").hidden)renderHome();
+    var w=waiters;waiters=[];
+    if(pullAgain){pullAgain=false;pullAll().then(function(r){w.forEach(function(f){f(r)})})}else w.forEach(function(f){f(result)});
+    return result;
+  });
+}
+function checkBuild(){
+  fetch(location.pathname+"?_b="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){
+    var m=t.match(/var BUILD="([^"]+)"/);if(m&&m[1]!==BUILD){newBuild=true;chip()}
+  }).catch(function(){});
 }
 urlLbl();
 goHome();
+chip();
 pullAll();
-setInterval(function(){if(!document.hidden)pullAll()},45000);
-setInterval(pollTick,5000);
-document.addEventListener("visibilitychange",function(){if(!document.hidden)pullAll()});
+checkBuild();
+setInterval(function(){if(!document.hidden)pullAll()},60000);
+setInterval(pollTick,15000);
+setInterval(checkBuild,600000);
+document.addEventListener("visibilitychange",function(){if(!document.hidden){pullAll();checkBuild()}});
+window.addEventListener("online",function(){pullAll()});
+window.addEventListener("focus",function(){pullAll()});
+window.addEventListener("pageshow",function(e){if(e.persisted)pullAll()});
 </script>
 </body>
 </html>
