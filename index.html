@@ -624,12 +624,12 @@ $("upFile").onchange=function(){
       return readFileRows(f).then(function(rows){
         if(!rows.length)throw new Error(f.name+": No units found in this file.");
         var nm=f.name.replace(/\.[^.]+$/,"").trim()||"Inventory file",ex=DS.filter(function(x){return x.name.toLowerCase()===nm.toLowerCase()})[0];
-        if(ex&&!confirm('"'+nm+'" is already in the list. Replace it? Its saved audits will be cleared.'))return;
+        if(ex&&!confirm('"'+nm+'" is already in the list. Replace it? Its saved audits and the old data in its Google Sheet tab will be replaced by the new upload.'))return;
         var data=[],ids={},max=0;
         rows.forEach(function(u){if(u.no>max)max=u.no});
         rows.forEach(function(u){var id=u.no;if(!id||ids[id])id=++max;ids[id]=1;data.push([id,u.model,u.engine,u.chassis,u.color,u.loc,u.days,u.extra||{}])});
         if(ex){ex.data=data;ex.saved={};ex.clr=1}else DS.push({id:"s"+Date.now()+"_"+Math.floor(Math.random()*1e6),name:nm,data:data,saved:{},clr:1});
-        added++;units+=data.length;
+        if(SIG.f){delete SIG.f[nm];sigSave()}added++;units+=data.length;
       }).catch(function(e){errs.push(e.message)});
     });
   },Promise.resolve()).then(function(){
@@ -637,7 +637,7 @@ $("upFile").onchange=function(){
     var msg=added?added+" file"+(added>1?"s":"")+" added ("+units.toLocaleString()+" units)":"";
     if(errs.length)msg+=(msg?". ":"")+errs.join(" ");
     toast((msg||"No files were added.")+(added?" \u2013 saving to Google Sheet\u2026":""),errs.length?6000:4000);
-    if(added)pullAll().then(function(r){toast(r.ok?(msg+". Saved to the Google Sheet and verified \u2713"):(msg+". NOT saved to the Google Sheet yet: "+r.err+". Kept on this device; it will retry automatically."),r.ok?6000:10000)});
+    if(added)pullAll().then(function(r){toast(r.ok?(msg+". Saved to the Google Sheet and verified \u2713 Updating the worksheets\u2026"):(msg+". NOT saved to the Google Sheet yet: "+r.err+". Kept on this device; it will retry automatically."),r.ok?6000:10000);if(r.ok)setTimeout(function(){syncEverything()},1500)});
   });
 };
 function setStats(x){var t=x.data.length,m=0,v=0,sv=x.saved||{};x.data.forEach(function(r){var a=sv[r[0]];if(a)m++});return{t:t,m:m,v:v,pc:t?Math.round((m+v)/t*100):0}}
@@ -659,9 +659,9 @@ function openSet(id){
   fillFileSel();$("home").hidden=true;$("dash").hidden=false;$("backBtn").hidden=false;$("subT").textContent=x.name;setOnly(true);render();window.scrollTo(0,0);pullAll();
 }
 function delSet(id){
-  var x=DS.filter(function(a){return a.id===id})[0];if(!x||!confirm('Delete "'+x.name+'" and its saved audits?\nThis also clears its data rows in the Google Sheet (a tab\'s headers stay).'))return;
+  var x=DS.filter(function(a){return a.id===id})[0];if(!x||!confirm('Delete "'+x.name+'" and its saved audits?\nThis also DELETES its worksheet in the Google Sheet.'))return;
   function done(msg){
-    var was=curSet&&curSet.id===id;DS=DS.filter(function(a){return a.id!==id});
+    var was=curSet&&curSet.id===id;DS=DS.filter(function(a){return a.id!==id});if(SIG.f){delete SIG.f[x.name];sigSave()}
     if(was){curSet=null;DATA=[];saved={};draft={};goHome()}else{saveAll();renderHome()}
     toast(msg,6000);
   }
@@ -669,14 +669,14 @@ function delSet(id){
   toast("Deleting\u2026 clearing the Google Sheet",15000);
   srvPush({action:"inv_delFile",name:x.name}).then(function(r){
     lastV=null;var sh=r.sheet||{};
-    done('Deleted "'+x.name+'". '+(sh.tab?'Sheet "'+sh.tab+'": '+(sh.cleared||0)+" rows cleared"+(sh.note&&sh.note!=="cleared"?" ("+sh.note+")":"")+".":"No worksheet changed ("+(sh.note||"no match")+")."));
+    done('Deleted "'+x.name+'". '+(sh.deleted?'Worksheet "'+sh.tab+'" deleted from the Google Sheet ('+(sh.cleared||0)+" rows).":(sh.tab&&sh.note==="cleared")?'Worksheet "'+sh.tab+'" cleared ('+(sh.cleared||0)+" rows).":"Worksheet not changed ("+(sh.note||"no match")+")."));
   },function(e){toast("NOT deleted: the Google Sheet was not updated ("+e.message+"). The file is kept; try again.",9000)});
 }
 $("home").addEventListener("click",function(e){var d=e.target.closest("[data-del]");if(d){delSet(d.dataset.del);return}var c=e.target.closest(".fc");if(c)openSet(c.dataset.id)});
 $("home").addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.classList.contains("fc"))openSet(e.target.dataset.id)});
 
 /* ---- Google Apps Script connection ---- */
-var BUILD="sync-2026-11-26b",UKEY="invAuditUrl2026v2",SURL="";
+var BUILD="sync-2026-11-26c",UKEY="invAuditUrl2026v2",SURL="";
 /* PASTE YOUR APPS SCRIPT /exec URL BETWEEN THE QUOTES. Every device uses THIS url (a per-device saved URL is only used if you set it by hand). */
 var DEFAULT_URL="https://script.google.com/macros/s/AKfycbxMG_WXYLD_HVVhM4Ul7NROmFR5jw8JZIAr8eWY9tYvlLcFzXA8Xpg-NCju_f_ad5ci/exec";
 SURL=DEFAULT_URL;
@@ -888,7 +888,7 @@ function pullAll(manual){
     DS.slice().forEach(function(x){
       if(srvNames[x.name.toLowerCase()])return;
       if(x.srv&&(del[x.name]||!(o.errors&&o.errors.length))){    /* deleted on another device: never resurrect it (only keep if the server reported read errors) */
-        DS=DS.filter(function(d){return d!==x});changed=true;
+        DS=DS.filter(function(d){return d!==x});changed=true;if(SIG.f){delete SIG.f[x.name];sigSave()}
         if(x===curSet){curSet=null;DATA=[];saved={};draft={};closePanel();$("home").hidden=false;$("dash").hidden=true;$("backBtn").hidden=true;$("subT").textContent="Select an inventory file";setOnly(false)}
       }else{                                                     /* new here, or missing from the server without a delete record: upload it, never drop it */
         (function(d){jobs.push(function(){return pushFile(d,!!d.clr).then(function(){var it=[];Object.keys(d.saved||{}).forEach(function(k){it.push({no:isNaN(+k)?k:+k,s:d.saved[k]})});return it.length?srvPush({action:"inv_putAudits",file:d.name,items:it}):0})})})(x)
