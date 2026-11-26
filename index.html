@@ -489,7 +489,7 @@ function doSave(){
   var chk=$("pChk").checked,loc=$("pLoc")?$("pLoc").value.trim():"",miss=[];
   if(!AUD)miss.push("auditor (top right)");if(!chk)miss.push("checkbox");if(!hideLoc&&!loc)miss.push("location");
   if(miss.length){$("pMsg").textContent="Not complete \u2013 missing: "+miss.join(", ");return}
-  var id=cur;saved[id]={chk:true,count:1,by:AUD,loc:loc,remarks:$("pRem")?$("pRem").value.trim():"",at:new Date().toISOString()};delete draft[id];persist();openPanel(id);toast("Saved: unit "+id);syncOne(id);
+  var id=cur;saved[id]={chk:true,count:1,by:AUD,loc:loc,remarks:$("pRem")?$("pRem").value.trim():"",at:new Date().toISOString()};delete draft[id];persist();openPanel(id);toast("Saved: unit "+id);syncOne(id);pushAudit(curSet.name,id,saved[id]);
 }
 $("rows").addEventListener("click",function(e){var tr=e.target.closest("tr");if(tr&&tr.dataset.id)openPanel(+tr.dataset.id)});
 $("rows").addEventListener("keydown",function(e){if(e.key==="Enter"){var tr=e.target.closest("tr");if(tr&&tr.dataset.id)openPanel(+tr.dataset.id)}});
@@ -514,7 +514,7 @@ $("copyBtn").onclick=function(){
   try{navigator.clipboard.writeText(t).then(function(){toast("CSV copied")},function(){toast("Could not copy")})}catch(e){toast("Could not copy")}
   drawer(false);
 };
-$("resetBtn").onclick=function(){if(confirm("Delete all saved audits?")){saved={};draft={};persist();closePanel();drawer(false)}};
+$("resetBtn").onclick=function(){if(confirm("Delete all saved audits?")){var nm=curSet&&curSet.name;saved={};draft={};persist();closePanel();drawer(false);if(nm&&SURL)srvPush({action:"inv_clearAudits",file:nm}).catch(function(e){toast("Cleared on this device, but the Google Sheet was not updated: "+e.message,6000)})}};
 function buildFilters(){
   var ms=[...new Set(DATA.map(function(r){return r[1]}))].sort(),ls=[...new Set(DATA.map(prevLoc).filter(Boolean))].sort();
   $("fModel").innerHTML='<option value="">All models</option>'+ms.map(function(m){return "<option>"+esc(m)+"</option>"}).join("");
@@ -568,7 +568,7 @@ $("upRef").onchange=function(){
       else{if(typeof XLSX==="undefined")throw new Error("The Excel reader did not load. Please upload a CSV file instead.");var wb=XLSX.read(rd.result,{type:"array"});sheets=wb.SheetNames.map(function(n){return XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:""})})}
       var tot=0,used=0;sheets.forEach(function(rows){var c=refRows(rows,REF.map);if(c){tot+=c;used++}});
       if(!tot)throw new Error("No locations found. The file needs an Engine or Chassis column and a Location column.");
-      REF.files.push(f.name);REF.count=Object.keys(REF.map).length;saveRef();
+      REF.files.push(f.name);REF.count=Object.keys(REF.map).length;saveRef();pullAll();
       if(curSet){buildFilters();render()}else renderHome();
       var na=0;Object.keys(REF.map).forEach(function(k){if(REF.map[k][4])na++});toast("Previous locations/remarks loaded: "+tot.toLocaleString()+" rows from "+used+" sheet"+(used>1?"s":"")+". Auditors found: "+na.toLocaleString()+(na?"":" (no AUDITOR column detected)"),4000);
     }catch(err){toast(err.message,5000)}
@@ -576,7 +576,7 @@ $("upRef").onchange=function(){
   if(ext==="csv")rd.readAsText(f);else rd.readAsArrayBuffer(f);
 };
 $("upRefBtn2").onclick=openRef;
-$("refClr").onclick=function(){if(REF.count&&confirm("Clear all previous locations and remarks?")){REF={map:{},files:[],count:0};saveRef();drawer(false);if(curSet){buildFilters();render()}else renderHome()}};
+$("refClr").onclick=function(){if(REF.count&&confirm("Clear all previous locations and remarks?")){REF={map:{},files:[],count:0,srv:REF.srv};saveRef();pullAll();drawer(false);if(curSet){buildFilters();render()}else renderHome()}};
 function csvRows(t){var rows=[],row=[],c="",q=false;for(var i=0;i<t.length;i++){var k=t.charCodeAt(i);if(q){if(k===34){if(t.charCodeAt(i+1)===34){c+=String.fromCharCode(34);i++}else q=false}else c+=t.charAt(i)}else if(k===34)q=true;else if(k===44){row.push(c);c=""}else if(k===10||k===13){if(k===13&&t.charCodeAt(i+1)===10)i++;row.push(c);rows.push(row);row=[];c=""}else c+=t.charAt(i)}row.push(c);rows.push(row);return rows}
 function mapRows(rows){
   var hi=-1;for(var i=0;i<Math.min(rows.length,15);i++){if(rows[i].some(function(c){return String(c).toLowerCase().indexOf("model")>=0})){hi=i;break}}
@@ -626,12 +626,12 @@ $("upFile").onchange=function(){
         var data=[],ids={},max=0;
         rows.forEach(function(u){if(u.no>max)max=u.no});
         rows.forEach(function(u){var id=u.no;if(!id||ids[id])id=++max;ids[id]=1;data.push([id,u.model,u.engine,u.chassis,u.color,u.loc,u.days,u.extra||{}])});
-        if(ex){ex.data=data;ex.saved={}}else DS.push({id:"s"+Date.now()+"_"+Math.floor(Math.random()*1e6),name:nm,data:data,saved:{}});
+        if(ex){ex.data=data;ex.saved={};ex.clr=1}else DS.push({id:"s"+Date.now()+"_"+Math.floor(Math.random()*1e6),name:nm,data:data,saved:{},clr:1});
         added++;units+=data.length;
       }).catch(function(e){errs.push(e.message)});
     });
   },Promise.resolve()).then(function(){
-    curSet=null;DATA=[];saved={};draft={};saveAll();goHome();
+    curSet=null;DATA=[];saved={};draft={};saveAll();goHome();pullAll();
     var msg=added?added+" file"+(added>1?"s":"")+" added ("+units.toLocaleString()+" units)":"";
     if(errs.length)msg+=(msg?". ":"")+errs.join(" ");
     toast(msg||"No files were added.",errs.length?6000:3000);
@@ -641,7 +641,7 @@ function setStats(x){var t=x.data.length,m=0,v=0,sv=x.saved||{};x.data.forEach(f
 function renderHome(){
   var tot=0,h=DS.slice().sort(function(a,b){return a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:"base"})}).map(function(x){var st=setStats(x);tot+=st.t;
     return '<div class="fc" data-id="'+x.id+'" tabindex="0"><button class="x" data-del="'+x.id+'" aria-label="Delete file">\u2715</button><div class="fn">'+esc(x.name)+'</div><div class="fm">'+st.t.toLocaleString()+' units</div><div class="bar"><i style="width:'+st.pc+'%"></i></div><div class="fs">'+st.pc+'% checked: '+st.m+' found</div></div>'}).join("");
-  $("home").innerHTML='<div class="hh"><div><h2>Inventory files</h2><p>'+(DS.length?DS.length+" files, "+tot.toLocaleString()+" units. Click a file to start checking.":"No files yet. Open the menu (\u2630) and tap Upload file to add your first inventory file (.csv or .xlsx).")+(REF.count?" Previous locations loaded for "+REF.count.toLocaleString()+" units.":"")+'</p></div></div>'+(DS.length?'<div class="fg">'+h+'</div>':"");
+  $("home").innerHTML='<div class="hh"><div><h2>Inventory files</h2><p>'+(DS.length?DS.length+" files, "+tot.toLocaleString()+" units. Click a file to start checking.":"No files yet. Open the menu (\u2630) and tap Upload file to add your first inventory file (.csv or .xlsx)."+(SMSG?" Could not load shared files: "+SMSG:(SURL?"":" Connect to Apps Script in the menu to share files with phones.")))+(REF.count?" Previous locations loaded for "+REF.count.toLocaleString()+" units.":"")+'</p></div></div>'+(DS.length?'<div class="fg">'+h+'</div>':"");
 }
 function setOnly(on){document.querySelectorAll(".setonly").forEach(function(b){b.hidden=!on});document.querySelectorAll(".homeonly").forEach(function(b){b.hidden=on})}
 function goHome(){closePanel();saveAll();curSet=null;DATA=[];saved={};draft={};$("home").hidden=false;$("dash").hidden=true;$("backBtn").hidden=true;$("subT").textContent="Select an inventory file";setOnly(false);renderHome();window.scrollTo(0,0)}
@@ -653,11 +653,11 @@ function openSet(id){
   var x=DS.filter(function(a){return a.id===id})[0];if(!x)return;
   saveAll();curSet=x;isRepo=/repo/i.test(x.name);hideLoc=false;$("thLoc").hidden=hideLoc;$("thLoc").parentNode.insertBefore(hideLoc?$("thAud"):$("thSt"),hideLoc?$("thSt"):$("thAud"));$("fLoc").hidden=hideLoc;DATA=x.data;saved=x.saved||(x.saved={});draft={};cur=null;
   $("q").value="";$("fModel").value="";$("fLoc").value="";$("fStat").value="all";buildFilters();
-  fillFileSel();$("home").hidden=true;$("dash").hidden=false;$("backBtn").hidden=false;$("subT").textContent=x.name;setOnly(true);render();window.scrollTo(0,0);
+  fillFileSel();$("home").hidden=true;$("dash").hidden=false;$("backBtn").hidden=false;$("subT").textContent=x.name;setOnly(true);render();window.scrollTo(0,0);pullAll();
 }
 function delSet(id){
   var x=DS.filter(function(a){return a.id===id})[0];if(!x||!confirm('Delete "'+x.name+'" and its saved audits?'))return;
-  var was=curSet&&curSet.id===id;DS=DS.filter(function(a){return a.id!==id});
+  var was=curSet&&curSet.id===id;DS=DS.filter(function(a){return a.id!==id});if(SURL)srvPush({action:"inv_delFile",name:x.name}).catch(function(e){toast("Deleted on this device, but the Google Sheet was not updated: "+e.message,6000)});
   if(was){curSet=null;DATA=[];saved={};draft={};goHome()}else{saveAll();renderHome()}
 }
 $("home").addEventListener("click",function(e){var d=e.target.closest("[data-del]");if(d){delSet(d.dataset.del);return}var c=e.target.closest(".fc");if(c)openSet(c.dataset.id)});
@@ -665,7 +665,10 @@ $("home").addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.cl
 
 /* ---- Google Apps Script connection ---- */
 var UKEY="invAuditUrl2026v1",SURL="";
+/* PASTE YOUR APPS SCRIPT /exec URL BETWEEN THE QUOTES. Every phone then connects by itself. */
+var DEFAULT_URL="https://script.google.com/macros/s/AKfycbxMG_WXYLD_HVVhM4Ul7NROmFR5jw8JZIAr8eWY9tYvlLcFzXA8Xpg-NCju_f_ad5ci/exec";
 try{SURL=localStorage.getItem(UKEY)||""}catch(e){}
+if(!SURL)SURL=DEFAULT_URL;
 function urlLbl(){$("urlBtn").textContent=SURL?"Apps Script: connected \u2713 (edit URL)":"Connect to Apps Script (URL)"}
 function urlOk(u){return /^https:\/\/script\.google\.com\/.+\/exec$/.test(u)}
 function urlMsg(t,bad){var e=$("upInfo");e.textContent=t||"";e.className=bad?"e":""}
@@ -797,33 +800,81 @@ document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("upModal
   L.refresh();ui();
 })();
 
-/* ---- Shared files: inventory-data.json in the same GitHub folder is loaded on every device ---- */
-var BURL="inventory-data.json";
-function dlJson(fn,o){var bl=new Blob([JSON.stringify(o)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(bl);a.download=fn;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1500)}
-function loadBuiltin(manual){
-  if(location.protocol==="file:"){if(manual)toast("Open the GitHub link to refresh the shared files.",5000);return}
-  fetch(BURL+"?t="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error(r.status===404?"No "+BURL+" found in the GitHub repo yet.":"HTTP "+r.status);return r.json()}).then(function(o){
-    if(!o||o.app!=="inv-audit-data"||!Array.isArray(o.sets))throw new Error(BURL+" is not valid.");
-    var add=0,upd=0;
-    o.sets.forEach(function(x){
-      if(!x||!x.name||!Array.isArray(x.data))return;
-      var sig=sigH(x.data),ex=DS.filter(function(d){return d.name.toLowerCase()===String(x.name).toLowerCase()})[0];
-      if(!ex){DS.push({id:"s"+Date.now()+"_"+Math.floor(Math.random()*1e6),name:x.name,data:x.data,saved:{},bsig:sig});add++}
-      else if(ex.bsig){if(ex.bsig!==sig){ex.data=x.data;ex.bsig=sig;if(ex===curSet)DATA=ex.data;upd++}}
-      else if(sigH(ex.data)===sig){ex.bsig=sig}
+/* ---- Shared data through the Google Sheet: the computer prepares, every phone sees it ---- */
+var SMSG="",pulling=false,pullAgain=false,lastV=null,pollBusy=false;
+function srvGet(){
+  return fetch(SURL+(SURL.indexOf("?")<0?"?":"&")+"action=inv_getAll&_t="+Date.now(),{cache:"no-store"}).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.text()}).then(function(t){
+    var j=null;try{j=JSON.parse(t)}catch(e){}
+    if(!j)throw new Error("The script did not return JSON. Check the deployment (Execute as Me, access Anyone, latest version).");
+    if(j.ok===false)throw new Error(j.error||"Script error");
+    return j;
+  });
+}
+function pollTick(){
+  if(!SURL||document.hidden||pulling||pollBusy)return;
+  pollBusy=true;
+  fetch(SURL+(SURL.indexOf("?")<0?"?":"&")+"action=inv_ver&_t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){
+    pollBusy=false;if(j&&j.ok&&String(j.v)!==String(lastV))pullAll();
+  }).catch(function(){pollBusy=false});
+}
+function srvPush(body){return SURL?postSheet(body):Promise.reject(new Error("No URL set"))}
+function pushAudit(file,id,s){if(SURL)srvPush({action:"inv_putAudit",file:file,no:id,s:s}).catch(function(){})}
+function newer(a,b){return String(a&&a.at||"")>String(b&&b.at||"")}
+function pullAll(manual){
+  if(!SURL)return;
+  if(pulling){pullAgain=true;return}
+  pulling=true;
+  srvGet().then(function(o){
+    lastV=o.v;
+    var changed=false,jobs=[],srvNames={};
+    var cl=o.cleared||{},au=o.audits||{};
+    (o.sets||[]).forEach(function(sv){
+      if(!sv||!sv.name||!Array.isArray(sv.data))return;
+      var key=sv.name.toLowerCase();srvNames[key]=1;
+      var ssig=sigH(sv.data),ex=DS.filter(function(d){return d.name.toLowerCase()===key})[0];
+      if(!ex){ex={id:"s"+Date.now()+"_"+Math.floor(Math.random()*1e6),name:sv.name,data:sv.data,saved:{},srv:ssig};DS.push(ex);changed=true}
+      else{
+        var lsig=sigH(ex.data);
+        if(lsig===ssig){ex.srv=ssig}
+        else if(ex.srv&&ex.srv!==ssig&&lsig===ex.srv){ex.data=sv.data;ex.srv=ssig;if(ex===curSet)DATA=ex.data;changed=true}
+        else{(function(x,clr){jobs.push(function(){return srvPush({action:"inv_putFile",name:x.name,data:x.data,clear:clr}).then(function(){x.srv=sigH(x.data);delete x.clr})})})(ex,!!ex.clr)}
+      }
+      var sa=au[sv.name]||{},sc=cl[sv.name]||"";ex.saved=ex.saved||{};
+      Object.keys(ex.saved).forEach(function(k){if(sc&&String(ex.saved[k]&&ex.saved[k].at||"")<sc){delete ex.saved[k];changed=true}});
+      Object.keys(sa).forEach(function(k){if(!ex.saved[k]||newer(sa[k],ex.saved[k])){ex.saved[k]=sa[k];changed=true}});
+      var items=[];Object.keys(ex.saved).forEach(function(k){if(!sa[k]||newer(ex.saved[k],sa[k]))items.push({no:isNaN(+k)?k:+k,s:ex.saved[k]})});
+      if(items.length)(function(nm,it){jobs.push(function(){return srvPush({action:"inv_putAudits",file:nm,items:it})})})(ex.name,items);
+      if(ex===curSet)saved=ex.saved;
     });
-    if(o.ref&&o.ref.map){
-      var rs=sigH(o.ref.map);
-      if(!REF.count||(REF.bsig&&REF.bsig!==rs)){REF={map:o.ref.map,files:o.ref.files||[],count:o.ref.count||Object.keys(o.ref.map).length,bsig:rs};saveRef();upd++}
-      else if(!REF.bsig&&sigH(REF.map)===rs){REF.bsig=rs;saveRef()}
-    }
-    if(add||upd){saveAll();if(curSet){buildFilters();render()}else renderHome();toast("Shared files loaded: "+add+" new, "+upd+" updated",4000)}
-    else if(manual)toast("Files are up to date.",2500);
-  }).catch(function(e){if(manual)toast("Could not load files: "+e.message,6000)});
+    DS.slice().forEach(function(x){
+      if(srvNames[x.name.toLowerCase()])return;
+      if(x.srv){
+        DS=DS.filter(function(d){return d!==x});changed=true;
+        if(x===curSet){curSet=null;DATA=[];saved={};draft={};closePanel();$("home").hidden=false;$("dash").hidden=true;$("backBtn").hidden=true;$("subT").textContent="Select an inventory file";setOnly(false)}
+      }else{(function(d){jobs.push(function(){return srvPush({action:"inv_putFile",name:d.name,data:d.data,clear:!!d.clr}).then(function(){d.srv=sigH(d.data);delete d.clr;var it=[];Object.keys(d.saved||{}).forEach(function(k){it.push({no:isNaN(+k)?k:+k,s:d.saved[k]})});return it.length?srvPush({action:"inv_putAudits",file:d.name,items:it}):0})})})(x)}
+    });
+    var lr=sigH(REF.map||{}),rr=o.ref&&o.ref.map?o.ref:null,rs=rr?sigH(rr.map):null;
+    if(rr&&rr.count&&!REF.count&&!REF.srv){REF={map:rr.map,files:rr.files||[],count:rr.count,srv:rs};changed=true}
+    else if(rr&&lr===rs){if(REF.srv!==rs)REF.srv=rs}
+    else if(rr&&REF.srv&&REF.srv!==rs&&lr===REF.srv){REF={map:rr.map,files:rr.files||[],count:rr.count||Object.keys(rr.map).length,srv:rs};changed=true}
+    else if(REF.count||rr){jobs.push(function(){return srvPush({action:"inv_putRef",ref:{map:REF.map,files:REF.files,count:REF.count}}).then(function(){REF.srv=sigH(REF.map)})})}
+    return jobs.reduce(function(p,j){return p.then(j)},Promise.resolve()).then(function(){
+      SMSG="";
+      if(changed||jobs.length){saveAll();saveRef();if(!curSet)renderHome();else if(changed&&cur==null){buildFilters();render()}}
+      if(manual)toast(changed?"Files updated from the Google Sheet.":"Files are up to date.",3000);
+    });
+  }).catch(function(e){
+    SMSG=e.message||"unknown error";
+    if(manual)toast("Could not load files: "+SMSG,6000);
+    if(!curSet&&!DS.length)renderHome();
+  }).then(function(){pulling=false;if(pullAgain){pullAgain=false;setTimeout(pullAll,300)}});
 }
 urlLbl();
 goHome();
-loadBuiltin(false);
+pullAll();
+setInterval(function(){if(!document.hidden)pullAll()},45000);
+setInterval(pollTick,5000);
+document.addEventListener("visibilitychange",function(){if(!document.hidden)pullAll()});
 </script>
 </body>
 </html>
